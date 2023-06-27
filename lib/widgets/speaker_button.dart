@@ -11,10 +11,10 @@ class SpeakerButton extends StatefulWidget {
   const SpeakerButton({Key? key, required this.filePath}) : super(key: key);
 
   @override
-  State<SpeakerButton> createState() => _SpeakerButtonState();
+  State<SpeakerButton> createState() => SpeakerButtonState();
 }
 
-class _SpeakerButtonState extends State<SpeakerButton> {
+class SpeakerButtonState extends State<SpeakerButton> {
   final _player = AudioPlayer();
   var _playerState = PlayerState.stopped;
 
@@ -22,28 +22,40 @@ class _SpeakerButtonState extends State<SpeakerButton> {
   void initState() {
     super.initState();
     _player.onPlayerStateChanged.listen((PlayerState s) {
-      setState(() {
+      if(mounted) {
+        setState(() {
         _playerState = s;
       });
+      }
     });
+    playPressed();
   }
 
   @override
   void dispose() {
-    _player.stop();
+    _player.dispose();
     super.dispose();
+
+  }
+
+  Future<void> playPressed() async{
+    if (_playerState == PlayerState.playing) {
+      await _player.stop();
+      return;
+    }
+    await _player.play(DeviceFileSource(widget.filePath));
+  }
+
+  //Requiered when several appeals подряд идет
+  Future<void> stopAndPlayNext() async{
+    _player.stop();
+    await _player.play(DeviceFileSource(widget.filePath));
   }
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () async {
-        if (_playerState == PlayerState.playing) {
-          await _player.stop();
-          return;
-        }
-        await _player.play(DeviceFileSource(widget.filePath));
-      },
+      onPressed: playPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: lightColor2,
         shape: const CircleBorder(),

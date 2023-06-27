@@ -111,16 +111,17 @@ class ApiService extends GetConnect {
     if (res.body['message'] == true) {
       myHeaders["Authorization"] = "Token $t";
     }
+    print('Token valid: ${res.body['message'] == true ? "YES": 'NO'}');
     return res.body['message'] == true ? 'main' : 'login';
   }
 
-  Future<bool> sendUserFreeTextTaskAnswer(String taskId, String text) async{
+  Future<String> sendUserFreeTextTaskAnswer(String taskId, String text) async{
     final body = {'task_id': taskId, 'text': text};
     final res = await post('$HOST/create_user_free_text_task', body);
-    if(res.body['message'] == true){
-      return true;
+    if (res.body['message'] == true){
+      return 'ok';
     }
-    return false;
+    return res.body['message'];
 
   }
 }

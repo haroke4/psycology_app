@@ -8,11 +8,12 @@ import '../services/api_service.dart';
 import '../services/local_storage_service.dart';
 
 class MainPageController extends GetxController {
+  var isLoadingFirstTime = false.obs;
   var isLoading = false.obs;
   var isSending = false.obs;
   var loadingPercentage = 0.0.obs;
   var actionMap = <String, ActionModel>{}.obs;
-  var historyOfActions = <String>[].obs;
+  var historyOfActions = <dynamic>[].obs;
   var currentAction = ActionModel(
           id: "0",
           typeTask: ActionTypeTask.select,
@@ -23,17 +24,30 @@ class MainPageController extends GetxController {
 
   final _apiService = Get.find<ApiService>();
 
+  Future<void> fetchData() async {
+    fetchActionList();
+    fetchAudio();
+
+    var a = await getSaving();
+    if (a != null) {
+      var b = actionMap[a['curr']];
+      if (a['history'] != null) {
+        historyOfActions.value = a['history'];
+      }
+      if (b != null) currentAction.value = b;
+    } else {
+      // APP OPENED FOR FIRST TIME
+
+      historyOfActions.add(currentAction.value.id);
+    }
+  }
+
   Future<void> _setActionList(data) async {
     actionMap.clear();
     for (var item in data) {
       actionMap.addAll({item['id'].toString(): ActionModel.fromJson(item)});
     }
     currentAction.value = actionMap[actionMap.keys.toList().first]!;
-  }
-
-  Future<void> fetchData() async {
-    fetchActionList();
-    fetchAudio();
   }
 
   Future<void> fetchActionList() async {
@@ -50,12 +64,14 @@ class MainPageController extends GetxController {
 
     // Checking version
     var response = await _apiService.checkActions(localData['version']);
-    if (response == null) { // we are up to date
+    if (response == null) {
+      // we are up to date
       return;
     }
 
     // Getting new version from net and setting it up
-    downloadAndSetActionList();
+    await downloadAndSetActionList();
+    await showSnackBarMessage("Текстовые данные обновлены успешно!");
   }
 
   Future<void> downloadAndSetActionList() async {
@@ -68,30 +84,31 @@ class MainPageController extends GetxController {
     var localAudioData = await getLocalAudioData();
     if (localAudioData == null) {
       // First time
+      isLoadingFirstTime.value = true;
       downloadAudioFiles(await downloadAudioList());
+      isLoadingFirstTime.value = false;
       return;
     }
 
     // Checking version
     var response = await _apiService
         .checkAudioMetaVersion(localAudioData['audio_meta_version']);
-    if (response == null){ // Up to date
+    if (response == null) {
+      // Up to date
       return;
     }
 
     // Downloading list of audio's that need to be updated
     Map<String, int> body = {};
-    for (var item in localAudioData['data']){
+    for (var item in localAudioData['data']) {
       body[item['id'].toString()] = item['version'];
     }
 
     response = await _apiService.checkAudioList(body);
-    downloadAudioList();
-    downloadAudioFiles(response);
-
+    await downloadAudioList();
+    await downloadAudioFiles(response);
+    await showSnackBarMessage("Аудио файлы обновлены успешно!");
   }
-
-
 
   Future<dynamic> downloadAudioList() async {
     var audioDataFromNet = await _apiService.getAudioList();
@@ -99,7 +116,7 @@ class MainPageController extends GetxController {
     return audioDataFromNet['data'];
   }
 
-  Future<void> downloadAudioFiles(data) async{
+  Future<void> downloadAudioFiles(data) async {
     // data = [{}, {}]
     isLoading.value = true;
     int length = data.length;
@@ -113,7 +130,6 @@ class MainPageController extends GetxController {
     }
 
     isLoading.value = false;
-
   }
 
   // Interactive
@@ -121,6 +137,7 @@ class MainPageController extends GetxController {
   void changeCurrentAction(String id_) {
     if (actionMap[id_] == null) return;
 
+    setSaving(actionMap[id_]!.id, historyOfActions.value);
     historyOfActions.add(currentAction.value.id);
     currentAction.value = actionMap[id_]!;
   }
@@ -129,6 +146,12 @@ class MainPageController extends GetxController {
     var next = actionMap[currentAction.value.nextId];
 
     if (next != null) {
+      if (next.typeTask == ActionTypeTask.select &&
+          next.answerList.isNotEmpty) {
+        historyOfActions.clear();
+      }
+      setSaving(next.id, historyOfActions.value);
+
       historyOfActions.add(currentAction.value.id);
       currentAction.value = next;
     }
@@ -139,21 +162,25 @@ class MainPageController extends GetxController {
     var prevId = historyOfActions.last;
     historyOfActions.removeLast();
     currentAction.value = actionMap[prevId]!;
+    setSaving(currentAction.value.id, historyOfActions.value);
   }
 
-  String getCurrentActionAudioPath(){
+  String getCurrentActionAudioPath() {
     return getActionAudioFilePath(currentAction.value);
   }
 
-  Future<String> userFreeTextTaskAnswer(String text) async{
+  Future<String> userFreeTextTaskAnswer(String text) async {
     isSending.value = true;
     final taskId = currentAction.value.id;
     final response = await _apiService.sendUserFreeTextTaskAnswer(taskId, text);
     isSending.value = false;
-    if (response){
-      return 'Отправлено';
+    switch (response) {
+      case 'ok':
+        return 'Отправлено';
+      case 'no text':
+        return 'Вы не ввели текст';
+      default:
+        return 'Что то пошло не так, повторите позже';
     }
-    return 'Something went wrong try again later';
-
   }
 }

@@ -23,6 +23,15 @@ Future<dynamic> readFile(filename) async {
   }
 }
 
+Future<Map?> getSaving() async{
+  var a = await readFile('saved.txt');
+  return jsonDecode(a);
+}
+
+Future<void> setSaving(String id, List history) async{
+  await createFile('saved.txt', jsonEncode({'curr': id, 'history': history}));
+}
+
 Future<bool> isThisUsersFirstTimeUsingApp() async{
   final t = await readFile('token.txt');
   final d = await readFile('data.json');
@@ -33,7 +42,7 @@ Future<bool> isThisUsersFirstTimeUsingApp() async{
 }
 
 Future<void> setAuthToken(String token) async {
-  createFile('token.txt', token);
+  await createFile('token.txt', token);
 }
 
 Future<String> getAuthToken() async {
@@ -43,7 +52,7 @@ Future<String> getAuthToken() async {
 }
 
 Future<void> setLocalActionList(data) async{
-  createFile('data.json', jsonEncode(data));
+  await createFile('data.json', jsonEncode(data));
 }
 
 Future<Map<String, dynamic>?> getLocalActionsList() async{
@@ -61,7 +70,7 @@ Future<Map<String, dynamic>?> getLocalAudioData() async{
 }
 
 Future<void> setLocalAudioData(dataFromNet) async{
-  createFile('audio_data.json', jsonEncode(dataFromNet));
+  await createFile('audio_data.json', jsonEncode(dataFromNet));
 }
 
 Future<void> saveAudioToLocal(filename, List<int> bytes) async{

@@ -11,6 +11,7 @@ import 'package:psychology_app/widgets/select_list.dart';
 import 'package:psychology_app/widgets/speaker_button.dart';
 
 import '../models/action_model.dart';
+import '../widgets/loading_widget.dart';
 import '../widgets/text_block.dart';
 import '../widgets/text_field.dart';
 
@@ -21,8 +22,16 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   final MainPageController _controller = Get.put(MainPageController());
+  late final _animController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  );
+  late final _animation = CurvedAnimation(
+    parent: _animController,
+    curve: Curves.easeIn,
+  );
 
   @override
   void initState() {
@@ -56,19 +65,26 @@ class _MainPageState extends State<MainPage> {
   }
 
   List<Widget> getWidgetByAction() {
-    if (_controller.isLoading.value) {
-      return getWidgetsForDownloading();
+    List<Widget> ans = [];
+    if (_controller.isLoadingFirstTime.value) {
+      return getWidgetsForDownloading(firstTime: true);
     }
+
+    if (_controller.isLoading.value) {
+      _animController.forward();
+      ans = getWidgetsForDownloading();
+    }
+    // List<Widget> ans = getWidgetsForDownloading();
 
     switch (_controller.currentAction.value.typeTask) {
       case ActionTypeTask.select:
-        return getWidgetsForSelectTask();
+        return ans + getWidgetsForSelectTask();
       case ActionTypeTask.freeText:
-        return getWidgetsForFreeTextTask();
+        return ans + getWidgetsForFreeTextTask();
       case ActionTypeTask.appeal:
-        return getWidgetsForAppealTask();
+        return ans + getWidgetsForAppealTask();
       case ActionTypeTask.speech:
-        return getWidgetsForSpeechTask();
+        return ans + getWidgetsForSpeechTask();
     }
   }
 
@@ -106,13 +122,22 @@ class _MainPageState extends State<MainPage> {
   }
 
   List<Widget> getWidgetsForAppealTask() {
+
+    // Это нужно когда аппил идет подряд
+    final GlobalKey<SpeakerButtonState> k = GlobalKey();
+    var t = SpeakerButton(
+        key: k, filePath: _controller.getCurrentActionAudioPath());
     return [
-      SpeakerButton(filePath: _controller.getCurrentActionAudioPath()),
+      t,
       SizedBox(height: 20.sp),
       TextBlock(text: _controller.currentAction.value.question),
       SizedBox(height: 20.sp),
       ControlButtons(
-        onNextPressed: () => _controller.nextAction(),
+        onNextPressed: () {
+          _controller.nextAction();
+          k.currentState!.stopAndPlayNext();
+
+        },
         onPreviousPressed: () => _controller.previousAction(),
       ),
     ];
@@ -122,17 +147,20 @@ class _MainPageState extends State<MainPage> {
     return [];
   }
 
-  List<Widget> getWidgetsForDownloading() {
+  List<Widget> getWidgetsForDownloading({bool firstTime = false}) {
     return [
-      const TextBlock(
-          text: "Required audio files are downloading... Please wait"),
-      SizedBox(height: 40.sp),
-      LinearProgressIndicator(
-        minHeight: 10.sp,
-        color: lightColor5,
-        backgroundColor: lightColor2,
-        value: _controller.loadingPercentage.value,
+      FadeTransition(
+        opacity: _animation,
+        child: LoadingWidget(
+          text: firstTime
+              ? "Загружаются необходимые файлы... Пожалуйста подождите"
+              : "Обновление файлов... Пожалуйста подождите",
+          value: _controller.loadingPercentage.value,
+        ),
       ),
+      SizedBox(
+        height: 30.sp,
+      )
     ];
   }
 }
