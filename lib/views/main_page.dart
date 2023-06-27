@@ -112,9 +112,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       SizedBox(height: 20.sp),
       ControlButtons(
         onNextPressed: () async {
+          _controller.nextAction();
           showSnackBarMessage(
               await _controller.userFreeTextTaskAnswer(textController.text));
-          _controller.nextAction();
         },
         onPreviousPressed: () => _controller.previousAction(),
       ),
