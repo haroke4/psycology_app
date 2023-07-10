@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:psychology_app/main.dart';
+import '../controllers/main_page_controller.dart';
 import '../prefabs/colors.dart';
 
 class SpeakerButton extends StatefulWidget {
@@ -21,24 +24,29 @@ class SpeakerButtonState extends State<SpeakerButton> {
   @override
   void initState() {
     super.initState();
+    var mainController = Get.find<MainPageController>();
+
     _player.onPlayerStateChanged.listen((PlayerState s) {
-      if(mounted) {
+      if (mounted) {
         setState(() {
-        _playerState = s;
-      });
+          _playerState = s;
+        });
+        if (s == PlayerState.completed || s == PlayerState.stopped) {
+
+          mainController.startVoiceRecognition();
+        }
       }
     });
-    playPressed();
+    if (mainController.settingsAutoplay.value) playPressed();
   }
 
   @override
   void dispose() {
     _player.dispose();
     super.dispose();
-
   }
 
-  Future<void> playPressed() async{
+  Future<void> playPressed() async {
     if (_playerState == PlayerState.playing) {
       await _player.stop();
       return;
@@ -47,7 +55,7 @@ class SpeakerButtonState extends State<SpeakerButton> {
   }
 
   //Requiered when several appeals подряд идет
-  Future<void> stopAndPlayNext() async{
+  Future<void> stopAndPlayNext() async {
     _player.stop();
     await _player.play(DeviceFileSource(widget.filePath));
   }

@@ -31,7 +31,7 @@ class ControlButtons extends StatelessWidget {
             disabledBackgroundColor: const Color.fromRGBO(197, 170, 170, 1.0),
           ),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(40.sp, 12.sp, 40.sp, 12.sp),
+            padding: EdgeInsets.fromLTRB(30.sp, 12.sp, 30.sp, 12.sp),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: IntrinsicWidth(
@@ -73,7 +73,7 @@ class ControlButtons extends StatelessWidget {
             disabledBackgroundColor: const Color.fromRGBO(197, 170, 170, 1.0),
           ),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(40.sp, 12.sp, 40.sp, 12.sp),
+            padding: EdgeInsets.fromLTRB(30.sp, 12.sp, 30.sp, 12.sp),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: IntrinsicWidth(

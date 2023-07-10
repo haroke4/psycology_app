@@ -25,7 +25,12 @@ Future<dynamic> readFile(filename) async {
 
 Future<Map?> getSaving() async{
   var a = await readFile('saved.txt');
+  if (a == null){
+    return null;
+  }
   return jsonDecode(a);
+
+  return null;
 }
 
 Future<void> setSaving(String id, List history) async{
@@ -85,4 +90,17 @@ Future<void> saveAudioToLocal(filename, List<int> bytes) async{
 
 String getActionAudioFilePath(ActionModel action){
   return '${thisAppDirectory?.path}/audio/${action.id}.m4a';
+}
+
+Future<Map<String, dynamic>?> getSettings() async{
+  var a = await readFile('settings.json');
+  if (a == null){
+    return null;
+  }
+
+  return jsonDecode(a);
+}
+
+Future<void> setSettings(Map<String, dynamic> data) async{
+  createFile('settings.json', jsonEncode(data));
 }

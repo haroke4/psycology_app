@@ -1,3 +1,4 @@
+import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,9 +10,11 @@ import 'package:psychology_app/prefabs/default_text_style.dart';
 import 'package:psychology_app/widgets/control_buttons.dart';
 import 'package:psychology_app/widgets/select_list.dart';
 import 'package:psychology_app/widgets/speaker_button.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../models/action_model.dart';
 import '../widgets/loading_widget.dart';
+import '../widgets/settings_dialog.dart';
 import '../widgets/text_block.dart';
 import '../widgets/text_field.dart';
 
@@ -23,7 +26,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
-  final MainPageController _controller = Get.put(MainPageController());
+  final MainPageController _controller = Get.find<MainPageController>();
   late final _animController = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 800),
@@ -36,7 +39,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controller.fetchData();
+    if (_controller.settingsSettingsHint.value) {
+      showSnackBarMessage(
+        "Подсказка: потяните вверх чтобы открыть настройки",
+        duration: Duration(seconds: 10),
+      );
+    }
   }
 
   @override
@@ -44,18 +52,38 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(width: double.infinity),
-                  SizedBox(height: 40.sp),
-                  ...getWidgetByAction(),
-                  SizedBox(height: 40.sp),
-                ],
+        child: CustomRefreshIndicator(
+          builder: MaterialIndicatorDelegate(
+            backgroundColor: lightColor1,
+            builder: (context, controller) {
+              return Transform.rotate(
+                angle: 180 * controller.value * 3.14 / 180,
+                child: Icon(
+                  Icons.settings,
+                  color: lightColor5,
+                  size: 40,
+                ),
+              );
+            },
+          ),
+
+          /// A function that is called when the user drags the refresh indicator.
+          onRefresh: () => showSettingsPopup(context),
+
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
+              child: Obx(
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: double.infinity),
+                    SizedBox(height: 40.sp),
+                    ...getWidgetByAction(),
+                    SizedBox(height: 40.sp),
+                  ],
+                ),
               ),
             ),
           ),
@@ -74,72 +102,95 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _animController.forward();
       ans = getWidgetsForDownloading();
     }
+
     // List<Widget> ans = getWidgetsForDownloading();
 
-    switch (_controller.currentAction.value.typeTask) {
-      case ActionTypeTask.select:
-        return ans + getWidgetsForSelectTask();
-      case ActionTypeTask.freeText:
-        return ans + getWidgetsForFreeTextTask();
-      case ActionTypeTask.appeal:
-        return ans + getWidgetsForAppealTask();
-      case ActionTypeTask.speech:
-        return ans + getWidgetsForSpeechTask();
+    bool addNavigationButtons = true;
+    _controller.currentPageHaveSelectButtons = false;
+
+    for (var item in _controller.currentPage) {
+      switch (item.typeTask) {
+        case ActionTypeTask.select:
+          _controller.currentPageHaveSelectButtons = item.answerList.isNotEmpty;
+          if (item.answerList.isNotEmpty) {
+            ans.addAll(getWidgetsForSelectTask(item));
+          }
+          break;
+
+        case ActionTypeTask.freeText:
+          if (item.id == '1_2') {
+            // показываем только первый фри текст
+            addNavigationButtons = false;
+
+            ans.addAll(getWidgetsForFreeTextTask());
+          }
+          break;
+
+        case ActionTypeTask.appeal:
+          ans.addAll(getWidgetsForAppealTask(item));
+          break;
+
+        case ActionTypeTask.speech:
+          ans.addAll(getWidgetsForSpeechTask());
+          break;
+      }
     }
+    if (addNavigationButtons) {
+      ans.addAll([
+        SizedBox(
+          height: 20.sp,
+        ),
+        ControlButtons(
+          onNextPressed: () async {
+            _controller.nextPage();
+          },
+          nextButtonCondition: () => !_controller.currentPageHaveSelectButtons,
+          onPreviousPressed: () => _controller.previousPage(),
+        ),
+      ]);
+    }
+    return ans;
   }
 
-  List<Widget> getWidgetsForSelectTask() {
-    if (_controller.currentAction.value.answerList.isEmpty) {
-      return [
-        ControlButtons(
-          onNextPressed: () => _controller.nextAction(),
-          onPreviousPressed: () => _controller.previousAction(),
-        )
-      ];
-    }
+  List<Widget> getWidgetsForSelectTask(ActionModel item) {
     return [
-      SelectButtonList(answerList: _controller.currentAction.value.answerList),
+      SizedBox(height: 20.sp),
+      SelectButtonList(answerList: item.answerList)
     ];
   }
 
   List<Widget> getWidgetsForFreeTextTask() {
-    var textController = TextEditingController();
+    _controller.freeTextController = TextEditingController();
     return [
+      SizedBox(height: 20.sp),
       MyTextField(
         hintText: "Enter your text here",
-        controller: textController,
+        controller: _controller.freeTextController,
+        onNextPressed: () {
+          _controller.nextPage();
+          _controller.userFreeTextTaskAnswer();
+        },
       ),
       SizedBox(height: 20.sp),
       ControlButtons(
         onNextPressed: () async {
-          _controller.nextAction();
-          showSnackBarMessage(
-              await _controller.userFreeTextTaskAnswer(textController.text));
+          _controller.nextPage();
+          showSnackBarMessage(await _controller.userFreeTextTaskAnswer());
         },
-        onPreviousPressed: () => _controller.previousAction(),
+        onPreviousPressed: () => _controller.previousPage(),
       ),
     ];
   }
 
-  List<Widget> getWidgetsForAppealTask() {
-
+  List<Widget> getWidgetsForAppealTask(ActionModel item) {
     // Это нужно когда аппил идет подряд
     final GlobalKey<SpeakerButtonState> k = GlobalKey();
     var t = SpeakerButton(
-        key: k, filePath: _controller.getCurrentActionAudioPath());
+        key: k, filePath: _controller.getCurrentActionAudioPath(item));
     return [
       t,
       SizedBox(height: 20.sp),
-      TextBlock(text: _controller.currentAction.value.question),
-      SizedBox(height: 20.sp),
-      ControlButtons(
-        onNextPressed: () {
-          _controller.nextAction();
-          k.currentState!.stopAndPlayNext();
-
-        },
-        onPreviousPressed: () => _controller.previousAction(),
-      ),
+      TextBlock(text: item.question),
     ];
   }
 

@@ -18,8 +18,6 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       backgroundColor: lightColor4,
       body: SafeArea(
@@ -70,27 +68,10 @@ class LoginPage extends StatelessWidget {
     return ElevatedButton(
       onPressed: () {
         FocusManager.instance.primaryFocus?.unfocus();
-        _loginController
-            .loginWithCredentials(
+        _loginController.loginWithCredentials(
           _usernameController.value.text,
           _passwordController.value.text,
-        )
-            .then((value) {
-
-          if (value == "ok") {
-            showSnackBarMessage("Login successful");
-            Get.offAll(
-              MainPage(),
-              transition: Transition.cupertinoDialog,
-              duration: const Duration(seconds: 1),
-            );
-          }
-
-          else if (value == "invalid"){
-            showSnackBarMessage("Invalid username or password");
-          }
-
-        });
+        );
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: lightColor2,

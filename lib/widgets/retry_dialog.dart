@@ -9,16 +9,16 @@ void showRetryDialog(context, Function after) {
     builder: (BuildContext context) => AlertDialog(
       title: Center(
         child: Text(
-          "No internet",
+          "Ошибка",
           style: TextStyle(
             color: Theme.of(context).primaryColorDark,
-            fontSize: 40.sp,
+            fontSize: 30.sp,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       content: Text(
-        "No connection to the server. Please make sure that you are connected to the internet. The internet is required to load initial data.",
+        "Нет подключения к серверу. Пожалуйста, убедитесь, что вы подключены к Интернету",
         style: TextStyle(
           color: Theme.of(context).primaryColorDark,
           fontSize: 22.sp,
@@ -38,11 +38,12 @@ void showRetryDialog(context, Function after) {
             backgroundColor: MaterialStateProperty.all(lightColor4),
           ),
           child: Text(
-            "Retry",
+            "Попробовать \nеще раз",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 30.sp,
+              fontSize: 20.sp,
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ],

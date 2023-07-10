@@ -7,6 +7,8 @@ import 'package:psychology_app/services/local_storage_service.dart';
 import 'package:psychology_app/views/login_page.dart';
 import 'package:psychology_app/views/main_page.dart';
 
+import 'main_page_controller.dart';
+
 enum SplashScreenStateValues{
   ok,
   noConnection,
@@ -26,6 +28,7 @@ class SplashScreenController extends GetxController {
     switch(r){
       case 'no': {
         currentState.value = SplashScreenStateValues.noConnection;
+
       } break;
       case 'login': {
         nextPage.value = LoginPage();
@@ -34,6 +37,9 @@ class SplashScreenController extends GetxController {
       case 'main': {
         nextPage.value = MainPage();
         currentState.value = SplashScreenStateValues.ok;
+        final controller = Get.find<MainPageController>();
+        await controller.initialize();
+
       } break;
       default: {} break;
     }

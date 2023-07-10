@@ -5,6 +5,7 @@ import 'package:psychology_app/controllers/splash_screen_controller.dart';
 import 'package:psychology_app/prefabs/colors.dart';
 import 'package:psychology_app/views/main_page.dart';
 
+import '../controllers/main_page_controller.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/retry_dialog.dart';
 
@@ -51,6 +52,9 @@ class _SplashScreenState extends State<SplashScreen>
               });
               return;
             }
+            _animationController.forward(from: 0.0);
+            final controller = Get.find<MainPageController>();
+            await controller.initialize();
             Get.offAll(() => const MainPage());
           }
           break;
@@ -81,7 +85,11 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: RotationTransition(
           turns: Tween(begin: 0.0, end: 1.0).animate(_animationController),
-          child: Image.asset("assets/tyan.png", height: 350.h),
+          child: const Icon(
+            Icons.ac_unit_sharp,
+            size: 200,
+            color: Colors.white,
+          ),
         ),
       ),
     );

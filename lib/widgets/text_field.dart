@@ -8,11 +8,13 @@ import '../prefabs/default_text_style.dart';
 class MyTextField extends StatefulWidget {
   final String hintText;
   final TextEditingController controller;
+  final Function onNextPressed;
 
   const MyTextField({
     Key? key,
     required this.hintText,
     required this.controller,
+    required this.onNextPressed,
   }) : super(key: key);
 
   @override
@@ -29,9 +31,7 @@ class _MyTextFieldState extends State<MyTextField> {
       style: defaultTextStyle,
       textInputAction: TextInputAction.go,
       onSubmitted: (value) {
-        var controller = Get.find<MainPageController>();
-        controller.nextAction();
-        controller.userFreeTextTaskAnswer(widget.controller.text);
+        widget.onNextPressed();
         FocusManager.instance.primaryFocus?.unfocus();
       },
       decoration: InputDecoration(

@@ -8,10 +8,13 @@ import 'package:psychology_app/services/api_service.dart';
 import 'package:psychology_app/views/login_page.dart';
 import 'package:psychology_app/views/splash_screen_page.dart';
 
+import 'controllers/main_page_controller.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   Get.put(ApiService());
+  Get.put(MainPageController());
 
   runApp(const MyApp());
 }
@@ -68,7 +71,7 @@ Future<void> showSnackBarMessage(String text, {Duration? duration}) async {
         maxLines: 4,
         style: TextStyle(
           color: lightColor5,
-          fontSize: 20.sp,
+          fontSize: 19.sp,
         ),
       ),
       backgroundColor: lightColor1,

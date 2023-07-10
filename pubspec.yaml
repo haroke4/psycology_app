@@ -39,6 +39,9 @@ dependencies:
   flutter_screenutil: ^5.7.0
   audioplayers: ^4.1.0
   path_provider: ^2.0.15
+  speech_to_text: ^6.1.1
+  custom_refresh_indicator: ^2.2.1
+  string_similarity: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +68,9 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
      - assets/
+     - assets/sounds/speech_to_text_listening.m4r
+     - assets/sounds/speech_to_text_cancel.m4r
+     - assets/sounds/speech_to_text_stop.m4r
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

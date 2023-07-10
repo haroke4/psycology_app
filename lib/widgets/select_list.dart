@@ -52,7 +52,7 @@ class _SelectButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: () {
         var controller = Get.find<MainPageController>();
-        controller.changeCurrentAction(nextActionId);
+        controller.changeCurrentPage(nextActionId);
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: lightColor2,
@@ -65,6 +65,7 @@ class _SelectButton extends StatelessWidget {
             child: Text(
               text,
               style: defaultTextStyle,
+              textAlign: TextAlign.center,
             ),
           ),
         ),

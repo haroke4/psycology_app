@@ -8,8 +8,9 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:psychology_app/main.dart';
 
-const HOST = "http://10.0.2.2:8000/api";
+const HOST = "http://92.51.39.141/api";
 var myHeaders = {
   "Content-type": "application/json",
 };
@@ -48,7 +49,8 @@ class ApiService extends GetConnect {
 
   Future<dynamic> checkActions(int version) async {
     final res = await post('$HOST/actions', {'version': version});
-    if (res.statusCode == 202) {
+
+    if (res.statusCode == 202 || res.hasError) {
       // up to date
       return;
     }
@@ -57,7 +59,7 @@ class ApiService extends GetConnect {
 
   Future<dynamic> checkAudioMetaVersion(int version) async {
     final res = await post('$HOST/check_audio_meta', {'version': version});
-    if (res.statusCode == 202) {
+    if (res.statusCode == 202 || res.hasError) {
       return;
     }
     return 'not';
@@ -84,7 +86,7 @@ class ApiService extends GetConnect {
       final bytes = response.bodyBytes;
       return bytes;
     } catch (e) {
-      print(e);
+      showSnackBarMessage('Error while downloading audio [$audioId]: ${e.toString()}');
       return null;
     }
   }
@@ -118,6 +120,9 @@ class ApiService extends GetConnect {
   Future<String> sendUserFreeTextTaskAnswer(String taskId, String text) async{
     final body = {'task_id': taskId, 'text': text};
     final res = await post('$HOST/create_user_free_text_task', body);
+    if (res.hasError){
+      return 'error.';
+    }
     if (res.body['message'] == true){
       return 'ok';
     }
