@@ -15,6 +15,7 @@ class SelectButtonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemCount: answerList.length,
       separatorBuilder: (BuildContext context, int index) {

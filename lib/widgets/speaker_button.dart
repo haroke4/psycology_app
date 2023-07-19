@@ -47,6 +47,7 @@ class SpeakerButtonState extends State<SpeakerButton> {
   }
 
   Future<void> playPressed() async {
+
     if (_playerState == PlayerState.playing) {
       await _player.stop();
       return;

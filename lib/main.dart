@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
               backgroundColor: Color.fromRGBO(21, 21, 21, 1.0),
             ),
           ),
-          home: Builder(builder: (context) {
+          home: Builder(builder: (BuildContext  context) {
             Get.put<ScaffoldMessengerState>(ScaffoldMessenger.of(context));
             return const SplashScreen();
           }),
@@ -62,11 +62,9 @@ class MyApp extends StatelessWidget {
 
 Future<void> showSnackBarMessage(String text, {Duration? duration}) async {
   duration = duration ?? const Duration(seconds: 2);
-  final ScaffoldMessengerState scaffoldMessenger =
-      Get.find<ScaffoldMessengerState>();
-  scaffoldMessenger.showSnackBar(
-    SnackBar(
-      content: Text(
+  Get.showSnackbar(
+    GetSnackBar(
+      messageText: Text(
         text,
         maxLines: 4,
         style: TextStyle(
@@ -76,10 +74,9 @@ Future<void> showSnackBarMessage(String text, {Duration? duration}) async {
       ),
       backgroundColor: lightColor1,
       padding: EdgeInsets.all(10.sp),
-      behavior: SnackBarBehavior.floating,
-      elevation: 5,
-      margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+      borderRadius: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
       duration: duration,
-    ),
+    )
   );
 }

@@ -242,17 +242,20 @@ class MainPageController extends GetxController {
     if (!settingsVoiceControl.value) return;
     showSnackBarMessage(
       'Распознование голоса...',
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1500),
     );
     var func = _voiceRecognitionResult;
+
     if (handler != null) func = (a) => handler(a);
     if (currentPageHaveSelectButtons) func = _voiceRecognitionForSelect;
     if (freeTextController != null) func = _voiceRecognitionForFreeText;
     _speechToText.listen(
       onResult: func,
       localeId: 'ru_RU',
-      pauseFor: const Duration(seconds: 10),
-      cancelOnError: false,
+      pauseFor: const Duration(seconds: 3),
+      listenMode: freeTextController == null
+          ? ListenMode.confirmation
+          : ListenMode.dictation,
     );
   }
 
@@ -278,7 +281,7 @@ class MainPageController extends GetxController {
 
     showSnackBarMessage(
       'Распознал: $words',
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(seconds: 1),
     );
 
     for (var item in next) {
@@ -359,7 +362,8 @@ class MainPageController extends GetxController {
         _addActionToPage(a);
         return;
 
-      default: break;
+      default:
+        break;
     }
 
     // если юзер сказал действия кнопок

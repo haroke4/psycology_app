@@ -45,7 +45,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     if (_controller.settingsSettingsHint.value) {
       showSnackBarMessage(
         "Подсказка: потяните вверх чтобы открыть настройки",
-        duration: Duration(seconds: 10),
+        duration: const Duration(seconds: 5),
       );
     }
   }
