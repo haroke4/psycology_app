@@ -20,13 +20,11 @@ class LoginController extends GetxController {
     var r = await apiService.loginWithCredentials(username, password);
     var ans = 'ok';
     if (r == 'invalid') {
-      showSnackBarMessage("Invalid username or password");
+      showSnackBarMessage("Неправильный логин или пароль");
       return;
     }
     setAuthToken(r);
-    showSnackBarMessage("Login successful");
-    final controller = Get.find<MainPageController>();
-    await controller.initialize();
+    showSnackBarMessage("Успешный вход");
 
     isLoggingIn.value = true;
 

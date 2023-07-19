@@ -38,7 +38,7 @@ class LoginPage extends StatelessWidget {
                 height: 20.sp,
               ),
               LoginTextField(
-                hintText: "Username",
+                hintText: "Логин",
                 controller: _usernameController,
                 obscure: false,
               ),
@@ -46,7 +46,7 @@ class LoginPage extends StatelessWidget {
                 height: 20.sp,
               ),
               LoginTextField(
-                hintText: "Password",
+                hintText: "Пароль",
                 controller: _passwordController,
                 obscure: true,
               ),
@@ -86,7 +86,7 @@ class LoginPage extends StatelessWidget {
                   radius: 15.sp,
                 )
               : Text(
-                  "Log In",
+                  "Войти",
                   style: defaultTextStyle,
                 ),
         ),

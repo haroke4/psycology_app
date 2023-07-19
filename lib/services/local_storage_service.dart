@@ -23,6 +23,17 @@ Future<dynamic> readFile(filename) async {
   }
 }
 
+Future<bool> _deleteFile(filename) async{
+  try {
+    thisAppDirectory ??= await getApplicationDocumentsDirectory();
+    final file = File('${thisAppDirectory?.path}/$filename');
+    await file.delete(recursive: true);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 Future<Map?> getSaving() async{
   var a = await readFile('saved.txt');
   if (a == null){
@@ -103,4 +114,11 @@ Future<Map<String, dynamic>?> getSettings() async{
 
 Future<void> setSettings(Map<String, dynamic> data) async{
   createFile('settings.json', jsonEncode(data));
+}
+
+Future<void> deleteEverything() async{
+  for (var name in ['settings.json', 'audio_data.json', 'data.json', 'saved.txt']){
+    await _deleteFile(name);
+  }
+  await Directory('${thisAppDirectory?.path}/audio').delete(recursive: true);
 }

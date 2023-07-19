@@ -10,10 +10,10 @@ import '../services/local_storage_service.dart';
 Future<void> showSettingsPopup(context) async {
   var mainController = Get.find<MainPageController>();
   saveSettings() => setSettings({
-    'settingsVoiceControl': mainController.settingsVoiceControl.value,
-    'settingsAutoplay': mainController.settingsAutoplay.value,
-    'settingsSettingsHint': mainController.settingsSettingsHint.value,
-  });
+        'settingsVoiceControl': mainController.settingsVoiceControl.value,
+        'settingsAutoplay': mainController.settingsAutoplay.value,
+        'settingsSettingsHint': mainController.settingsSettingsHint.value,
+      });
 
   mainController.settingsSettingsHint.value = false;
   saveSettings();
@@ -71,6 +71,29 @@ Future<void> showSettingsPopup(context) async {
                 ),
               ],
             ),
+            TableRow(
+              children: [
+                TextButton(
+                  onPressed: () async{
+                    await deleteEverything();
+                    mainController.initialize();
+                  },
+                  style: ButtonStyle(
+                    overlayColor: MaterialStateProperty.all(Colors.white12),
+                    backgroundColor: MaterialStateProperty.all(lightColor4),
+                  ),
+                  child: Text(
+                    "Починить приложение?",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(),
+              ],
+            ),
           ],
         ),
       ),
@@ -97,6 +120,4 @@ Future<void> showSettingsPopup(context) async {
       ],
     ),
   );
-
-
 }

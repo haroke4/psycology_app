@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:psychology_app/main.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import  'package:string_similarity/string_similarity.dart';
+import 'package:string_similarity/string_similarity.dart';
 
 import '../models/action_model.dart';
 import '../services/api_service.dart';
@@ -14,6 +14,7 @@ import '../services/local_storage_service.dart';
 class MainPageController extends GetxController {
   var currentPageHaveSelectButtons = false;
   var freeTextController;
+  var inited = false;
 
   var isLoadingFirstTime = false.obs;
   var isLoading = false.obs;
@@ -21,6 +22,7 @@ class MainPageController extends GetxController {
   var loadingPercentage = 0.0.obs;
 
   var actionMap = <String, ActionModel>{}.obs;
+
   // String is start id of the appeal action; dynamic because from it serializes from json
   var historyOfActions = <dynamic>[].obs;
   var currentPage = <ActionModel>[].obs;
@@ -36,21 +38,23 @@ class MainPageController extends GetxController {
 
   Future<void> initialize() async {
     var appSettings = await getSettings();
-    if (appSettings != null){
+    if (appSettings != null) {
       settingsAutoplay.value = appSettings['settingsAutoplay'];
       settingsVoiceControl.value = appSettings['settingsVoiceControl'];
       settingsSettingsHint.value = appSettings['settingsSettingsHint'];
     }
 
     var speechToTextStatus = await _speechToText.initialize();
-    if(!speechToTextStatus){
-      showSnackBarMessage('Голосовое управление не поддерживается на этом устройстве');
+    if (!speechToTextStatus) {
+      showSnackBarMessage(
+          'Голосовое управление не поддерживается на этом устройстве');
     }
 
     await fetchActionList();
     await fetchAudio();
 
     var a = await getSaving();
+    currentPage.clear();
     if (a != null && a['curr'] != '') {
       var b = actionMap[a['curr']];
       if (b != null) _addActionToPage(a['curr']);
@@ -61,6 +65,7 @@ class MainPageController extends GetxController {
       // APP OPENED FOR FIRST TIME
       _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
     }
+    inited = true;
   }
 
   Future<void> _setActionList(data) async {
@@ -106,7 +111,7 @@ class MainPageController extends GetxController {
     var localAudioData = await getLocalAudioData();
     if (localAudioData == null) {
       // First time
-      await downloadAudioList();
+      await downloadAudioListAndAudioFiles();
       return;
     }
 
@@ -141,16 +146,10 @@ class MainPageController extends GetxController {
     await showSnackBarMessage("Аудио файлы обновлены успешно!");
   }
 
-  Future<void> downloadAudioList({localAudioData}) async {
-    if (localAudioData != null) {
-      // we have local data but we check it
-      // Checking version
-    }
-
+  Future<void> downloadAudioListAndAudioFiles() async {
+    isLoadingFirstTime.value = true;
     var audioDataFromNet = await _apiService.getAudioList();
     await setLocalAudioData(audioDataFromNet);
-
-    isLoadingFirstTime.value = true;
     await downloadAudioFilesAndSave(audioDataFromNet['data']);
     isLoadingFirstTime.value = false;
     await showSnackBarMessage("Аудио файлы обновлены успешно!");
@@ -166,7 +165,7 @@ class MainPageController extends GetxController {
 
       final item = data[i];
       var bytes = await _apiService.getAudioFile(item['id']);
-      if (bytes == null){
+      if (bytes == null) {
         continue;
       }
       saveAudioToLocal(item['name'], bytes);
@@ -176,9 +175,8 @@ class MainPageController extends GetxController {
   }
 
   Future<String> userFreeTextTaskAnswer() async {
-    isSending.value = true;
-    final response = await _apiService.sendUserFreeTextTaskAnswer('2_1', freeTextController.text);
-    isSending.value = false;
+    final response = await _apiService.sendUserFreeTextTaskAnswer(
+        '2_1', freeTextController.text);
     switch (response) {
       case 'ok':
         return 'Отправлено';
@@ -191,12 +189,12 @@ class MainPageController extends GetxController {
 
   // Interactive
   void _everyStepActions(String id_, {fromPrevious = false}) {
+    if (_speechToText.isListening) _speechToText.stop();
     if (fromPrevious) {
       currentPage.clear();
       _addActionToPage(historyOfActions.last);
       id_ = historyOfActions.last;
       historyOfActions.removeLast();
-
     } else {
       historyOfActions.add(currentPage.value.first.id);
       currentPage.clear();
@@ -242,7 +240,10 @@ class MainPageController extends GetxController {
   // voice recognition
   void startVoiceRecognition({Function? handler}) async {
     if (!settingsVoiceControl.value) return;
-    showSnackBarMessage('Распознование голоса...');
+    showSnackBarMessage(
+      'Распознование голоса...',
+      duration: const Duration(milliseconds: 800),
+    );
     var func = _voiceRecognitionResult;
     if (handler != null) func = (a) => handler(a);
     if (currentPageHaveSelectButtons) func = _voiceRecognitionForSelect;
@@ -250,12 +251,13 @@ class MainPageController extends GetxController {
     _speechToText.listen(
       onResult: func,
       localeId: 'ru_RU',
-      pauseFor: const Duration(seconds: 5),
+      pauseFor: const Duration(seconds: 10),
+      cancelOnError: false,
     );
   }
 
   void _voiceRecognitionResult(SpeechRecognitionResult result) {
-    if (!result.finalResult){
+    if (!result.finalResult) {
       return;
     }
     var words = result.recognizedWords;
@@ -274,7 +276,10 @@ class MainPageController extends GetxController {
     var repeat = ['Еще раз', 'Перемотай', 'Заново', 'Ещё раз'];
     var recognitionResult = '';
 
-    showSnackBarMessage('Распознал: $words');
+    showSnackBarMessage(
+      'Распознал: $words',
+      duration: const Duration(milliseconds: 800),
+    );
 
     for (var item in next) {
       if (words.toLowerCase().contains(item.toLowerCase())) {
@@ -306,48 +311,90 @@ class MainPageController extends GetxController {
         break;
 
       default:
-        showSnackBarMessage('Нет действия для $words');
+        showSnackBarMessage(
+          'Нет действия для "$words"',
+          duration: const Duration(seconds: 1),
+        );
+        startVoiceRecognition();
         break;
     }
   }
 
-  void _voiceRecognitionForSelect(SpeechRecognitionResult result){
-    if (!result.finalResult){
+  void _voiceRecognitionForSelect(SpeechRecognitionResult result) {
+    if (!result.finalResult) {
       return;
     }
+
+    // если юзер сказал назад или еще раз
+    var words = result.recognizedWords;
+    showSnackBarMessage(
+      'Распознал: $words',
+      duration: const Duration(milliseconds: 800),
+    );
+
+    var back = ['Назад', 'Обратно'];
+    var repeat = ['Еще раз', 'Перемотай', 'Заново', 'Ещё раз'];
+    var recognitionResult = '';
+
+    for (var item in back) {
+      if (words.toLowerCase().contains(item.toLowerCase())) {
+        recognitionResult = 'back';
+      }
+    }
+
+    for (var item in repeat) {
+      if (words.toLowerCase().contains(item.toLowerCase())) {
+        recognitionResult = 'repeat';
+      }
+    }
+
+    switch (recognitionResult) {
+      case 'back':
+        previousPage();
+        return;
+
+      case 'repeat':
+        var a = currentPage.first.id;
+        currentPage.clear();
+        _addActionToPage(a);
+        return;
+
+      default: break;
+    }
+
+    // если юзер сказал действия кнопок
+
     var select;
-    for (var item in currentPage){
-      if (item.typeTask == ActionTypeTask.select){
+    for (var item in currentPage) {
+      if (item.typeTask == ActionTypeTask.select) {
         select = item;
         break;
       }
     }
-    if (select == null){
+    if (select == null) {
       return;
     }
     // algorithm that recognizes
-    var words = result.recognizedWords;
-    showSnackBarMessage('Распознал: $words');
     double maxCoef = 0;
     var answer = select.answerList.first;
-    for (var item in select.answerList){
-      double coef = words.similarityTo(item.text.replaceAll(',', '').toLowerCase());
-      if (coef > maxCoef){
+    for (var item in select.answerList) {
+      double coef =
+          words.similarityTo(item.text.replaceAll(',', '').toLowerCase());
+      if (coef > maxCoef) {
         maxCoef = coef;
         answer = item;
       }
-
     }
+
     changeCurrentPage(answer.goTo);
   }
 
-  void _voiceRecognitionForFreeText(SpeechRecognitionResult result) async{
+  void _voiceRecognitionForFreeText(SpeechRecognitionResult result) async {
     freeTextController.text = result.recognizedWords;
-    if (result.finalResult){
+    if (result.finalResult) {
       freeTextController = null;
       userFreeTextTaskAnswer();
       nextPage();
-
     }
   }
 }

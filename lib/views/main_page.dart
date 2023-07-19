@@ -39,6 +39,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    if (!_controller.inited){
+      _controller.initialize();
+    }
     if (_controller.settingsSettingsHint.value) {
       showSnackBarMessage(
         "Подсказка: потяните вверх чтобы открыть настройки",
@@ -94,7 +97,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   List<Widget> getWidgetByAction() {
     List<Widget> ans = [];
-    if (_controller.isLoadingFirstTime.value) {
+      if (_controller.isLoadingFirstTime.value) {
+      _animController.forward();
       return getWidgetsForDownloading(firstTime: true);
     }
 

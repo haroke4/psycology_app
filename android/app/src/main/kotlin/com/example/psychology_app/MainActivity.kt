@@ -1,4 +1,4 @@
-package com.example.psychology_app
+package com.psy.robot
 
 import io.flutter.embedding.android.FlutterActivity
 
