@@ -37,12 +37,13 @@ dependencies:
   cupertino_icons: ^1.0.2
   get: ^4.6.5
   flutter_screenutil: ^5.7.0
-  audioplayers: ^4.1.0
   path_provider: ^2.0.15
   speech_to_text: ^6.1.1
   custom_refresh_indicator: ^2.2.1
   string_similarity: ^2.0.0
   flutter_launcher_icons: ^0.13.1
+  just_audio: ^0.9.34
+  http: ^0.13.6
 
 dev_dependencies:
   flutter_test:

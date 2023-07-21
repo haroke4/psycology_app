@@ -39,7 +39,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    if (!_controller.inited){
+    if (!_controller.inited) {
       _controller.initialize();
     }
     if (_controller.settingsSettingsHint.value) {
@@ -97,7 +97,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   List<Widget> getWidgetByAction() {
     List<Widget> ans = [];
-      if (_controller.isLoadingFirstTime.value) {
+    if (_controller.isLoadingFirstTime.value) {
       _animController.forward();
       return getWidgetsForDownloading(firstTime: true);
     }
@@ -172,14 +172,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         controller: _controller.freeTextController,
         onNextPressed: () {
           _controller.nextPage();
-          _controller.userFreeTextTaskAnswer();
+          _controller
+              .userFreeTextTaskAnswer(_controller.freeTextController.text);
         },
       ),
       SizedBox(height: 20.sp),
       ControlButtons(
         onNextPressed: () async {
           _controller.nextPage();
-          showSnackBarMessage(await _controller.userFreeTextTaskAnswer());
+          showSnackBarMessage(await _controller
+              .userFreeTextTaskAnswer(_controller.freeTextController.text));
         },
         onPreviousPressed: () => _controller.previousPage(),
       ),

@@ -1,8 +1,6 @@
-import 'dart:convert';
-
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:psychology_app/main.dart';
+import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:string_similarity/string_similarity.dart';
@@ -14,6 +12,8 @@ import '../services/local_storage_service.dart';
 class MainPageController extends GetxController {
   var currentPageHaveSelectButtons = false;
   var freeTextController;
+  var _recognizedWords = ''; // там распознование обрывается вот
+  var _recognitionTries = 0;
   var inited = false;
 
   var isLoadingFirstTime = false.obs;
@@ -49,6 +49,16 @@ class MainPageController extends GetxController {
       showSnackBarMessage(
           'Голосовое управление не поддерживается на этом устройстве');
     }
+    // Если нечего не распознал, пытаемся еще и еще раз
+    _speechToText.errorListener = (SpeechRecognitionError data) {
+      print('КОНЧЕННЫЙ $data');
+      if ((data.errorMsg == 'error_no_match' ||
+              data.errorMsg == 'error_speech_timeout') &&
+          _recognizedWords == '' &&
+          _recognitionTries < 2) {
+        startVoiceRecognition(silent: true, incrementTries: true);
+      }
+    };
 
     await fetchActionList();
     await fetchAudio();
@@ -174,9 +184,8 @@ class MainPageController extends GetxController {
     isLoading.value = false;
   }
 
-  Future<String> userFreeTextTaskAnswer() async {
-    final response = await _apiService.sendUserFreeTextTaskAnswer(
-        '2_1', freeTextController.text);
+  Future<String> userFreeTextTaskAnswer(text) async {
+    final response = await _apiService.sendUserFreeTextTaskAnswer('2_1', text);
     switch (response) {
       case 'ok':
         return 'Отправлено';
@@ -238,12 +247,25 @@ class MainPageController extends GetxController {
   }
 
   // voice recognition
-  void startVoiceRecognition({Function? handler}) async {
+  void startVoiceRecognition({
+    Function? handler,
+    silent = false,
+    incrementTries = false,
+  }) async {
+    if (_speechToText.isListening) return;
     if (!settingsVoiceControl.value) return;
-    showSnackBarMessage(
-      'Распознование голоса...',
-      duration: const Duration(milliseconds: 1500),
-    );
+    if (incrementTries) {
+      _recognitionTries += 1;
+    } else {
+      _recognitionTries = 0;
+    }
+    if (!silent) {
+      showSnackBarMessage(
+        'Распознование голоса...',
+        duration: const Duration(milliseconds: 1500),
+      );
+    }
+
     var func = _voiceRecognitionResult;
 
     if (handler != null) func = (a) => handler(a);
@@ -252,18 +274,22 @@ class MainPageController extends GetxController {
     _speechToText.listen(
       onResult: func,
       localeId: 'ru_RU',
-      pauseFor: const Duration(seconds: 3),
+      pauseFor: const Duration(seconds: 5),
       listenMode: freeTextController == null
           ? ListenMode.confirmation
           : ListenMode.dictation,
     );
+
+    // _speechToText.errorListener = (data) {
+    //   print(data);
+    // };
   }
 
   void _voiceRecognitionResult(SpeechRecognitionResult result) {
     if (!result.finalResult) {
       return;
     }
-    var words = result.recognizedWords;
+    _recognizedWords = result.recognizedWords;
     var next = [
       'Сделал',
       'Готово',
@@ -272,32 +298,34 @@ class MainPageController extends GetxController {
       'Получилось',
       'Все',
       'Доделал',
-      'Закончил'
+      'Закончил',
+      'Запись'
     ];
 
     var back = ['Назад', 'Обратно'];
     var repeat = ['Еще раз', 'Перемотай', 'Заново', 'Ещё раз'];
     var recognitionResult = '';
 
-    showSnackBarMessage(
-      'Распознал: $words',
-      duration: const Duration(seconds: 1),
-    );
-
     for (var item in next) {
-      if (words.toLowerCase().contains(item.toLowerCase())) {
+      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
         recognitionResult = 'next';
       }
     }
     for (var item in back) {
-      if (words.toLowerCase().contains(item.toLowerCase())) {
+      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
         recognitionResult = 'back';
       }
     }
     for (var item in repeat) {
-      if (words.toLowerCase().contains(item.toLowerCase())) {
+      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
         recognitionResult = 'repeat';
       }
+    }
+    if (recognitionResult != '') {
+      showSnackBarMessage(
+        'Распознал: $_recognizedWords',
+        duration: const Duration(seconds: 1),
+      );
     }
 
     switch (recognitionResult) {
@@ -315,12 +343,13 @@ class MainPageController extends GetxController {
 
       default:
         showSnackBarMessage(
-          'Нет действия для "$words"',
+          'Нет действия для "$_recognizedWords"',
           duration: const Duration(seconds: 1),
         );
-        startVoiceRecognition();
+        startVoiceRecognition(silent: true);
         break;
     }
+    _recognizedWords = '';
   }
 
   void _voiceRecognitionForSelect(SpeechRecognitionResult result) {
@@ -329,9 +358,9 @@ class MainPageController extends GetxController {
     }
 
     // если юзер сказал назад или еще раз
-    var words = result.recognizedWords;
+    _recognizedWords = result.recognizedWords;
     showSnackBarMessage(
-      'Распознал: $words',
+      'Распознал: $_recognizedWords',
       duration: const Duration(milliseconds: 800),
     );
 
@@ -340,13 +369,13 @@ class MainPageController extends GetxController {
     var recognitionResult = '';
 
     for (var item in back) {
-      if (words.toLowerCase().contains(item.toLowerCase())) {
+      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
         recognitionResult = 'back';
       }
     }
 
     for (var item in repeat) {
-      if (words.toLowerCase().contains(item.toLowerCase())) {
+      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
         recognitionResult = 'repeat';
       }
     }
@@ -382,8 +411,8 @@ class MainPageController extends GetxController {
     double maxCoef = 0;
     var answer = select.answerList.first;
     for (var item in select.answerList) {
-      double coef =
-          words.similarityTo(item.text.replaceAll(',', '').toLowerCase());
+      double coef = _recognizedWords
+          .similarityTo(item.text.replaceAll(',', '').toLowerCase());
       if (coef > maxCoef) {
         maxCoef = coef;
         answer = item;
@@ -391,14 +420,24 @@ class MainPageController extends GetxController {
     }
 
     changeCurrentPage(answer.goTo);
+    _recognizedWords = '';
   }
 
   void _voiceRecognitionForFreeText(SpeechRecognitionResult result) async {
-    freeTextController.text = result.recognizedWords;
+    freeTextController.text = _recognizedWords + result.recognizedWords;
     if (result.finalResult) {
+      if (!result.recognizedWords.toLowerCase().contains('запись')) {
+        startVoiceRecognition();
+        _recognizedWords += '${result.recognizedWords} ';
+        return;
+      }
+
+      userFreeTextTaskAnswer(freeTextController.text)
+          .then((value) => showSnackBarMessage(value));
+
       freeTextController = null;
-      userFreeTextTaskAnswer();
       nextPage();
+      _recognizedWords = '';
     }
   }
 }

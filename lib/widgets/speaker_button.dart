@@ -1,10 +1,8 @@
-import 'dart:io';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:psychology_app/main.dart';
+import 'package:just_audio/just_audio.dart';
 import '../controllers/main_page_controller.dart';
 import '../prefabs/colors.dart';
 
@@ -19,24 +17,35 @@ class SpeakerButton extends StatefulWidget {
 
 class SpeakerButtonState extends State<SpeakerButton> {
   final _player = AudioPlayer();
-  var _playerState = PlayerState.stopped;
+  bool started = false;
 
   @override
   void initState() {
     super.initState();
     var mainController = Get.find<MainPageController>();
 
-    _player.onPlayerStateChanged.listen((PlayerState s) {
+    _player.playbackEventStream.listen((event) {
       if (mounted) {
         setState(() {
-          _playerState = s;
+          if (event.processingState == ProcessingState.completed ||
+              (event.processingState == ProcessingState.idle && started)) {
+            mainController.startVoiceRecognition();
+            started = false;
+          }
         });
-        if (s == PlayerState.completed || s == PlayerState.stopped) {
-
-          mainController.startVoiceRecognition();
-        }
       }
     });
+
+    // _player.onPlayerStateChanged.listen((PlayerState s) {
+    //   if (mounted) {
+    //     setState(() {
+    //       _playerState = s;
+    //     });
+    //     if (s == PlayerState.completed || s == PlayerState.stopped) {
+    //
+    //     }
+    //   }
+    // });
     if (mainController.settingsAutoplay.value) playPressed();
   }
 
@@ -47,18 +56,23 @@ class SpeakerButtonState extends State<SpeakerButton> {
   }
 
   Future<void> playPressed() async {
-
-    if (_playerState == PlayerState.playing) {
-      await _player.stop();
+    if (_player.playing == true) {
+      _player.stop();
       return;
     }
-    await _player.play(DeviceFileSource(widget.filePath));
+    _player.setFilePath(widget.filePath);
+    await _player.play();
+    started = true;
+
   }
 
   //Requiered when several appeals подряд идет
   Future<void> stopAndPlayNext() async {
     _player.stop();
-    await _player.play(DeviceFileSource(widget.filePath));
+    _player.setFilePath(widget.filePath);
+    await _player.play();
+    started = true;
+
   }
 
   @override
