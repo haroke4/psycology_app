@@ -13,6 +13,7 @@ Future<void> showSettingsPopup(context) async {
         'settingsVoiceControl': mainController.settingsVoiceControl.value,
         'settingsAutoplay': mainController.settingsAutoplay.value,
         'settingsSettingsHint': mainController.settingsSettingsHint.value,
+        'settingsSaveProgress': mainController.settingsSaveProgress.value,
       });
 
   mainController.settingsSettingsHint.value = false;
@@ -73,8 +74,24 @@ Future<void> showSettingsPopup(context) async {
             ),
             TableRow(
               children: [
+                const Text('Сохранение прогресса'),
+                Switch(
+                  value: mainController.settingsSaveProgress.value,
+                  onChanged: (a) {
+                    mainController.settingsSaveProgress.value = a;
+                    saveSettings();
+                  },
+                  activeColor: lightColor5,
+                  activeTrackColor: lightColor4,
+                  inactiveThumbColor: lightColor3,
+                  inactiveTrackColor: lightColor4,
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
                 TextButton(
-                  onPressed: () async{
+                  onPressed: () async {
                     await deleteEverything();
                     mainController.initialize();
                   },

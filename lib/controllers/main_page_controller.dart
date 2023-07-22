@@ -31,6 +31,7 @@ class MainPageController extends GetxController {
   var settingsAutoplay = true.obs;
   var settingsVoiceControl = true.obs;
   var settingsSettingsHint = true.obs;
+  var settingsSaveProgress = false.obs;
 
   //
   final _apiService = Get.find<ApiService>();
@@ -39,9 +40,10 @@ class MainPageController extends GetxController {
   Future<void> initialize() async {
     var appSettings = await getSettings();
     if (appSettings != null) {
-      settingsAutoplay.value = appSettings['settingsAutoplay'];
-      settingsVoiceControl.value = appSettings['settingsVoiceControl'];
-      settingsSettingsHint.value = appSettings['settingsSettingsHint'];
+      settingsAutoplay.value = appSettings['settingsAutoplay'] ?? true;
+      settingsVoiceControl.value = appSettings['settingsVoiceControl'] ?? true;
+      settingsSettingsHint.value = appSettings['settingsSettingsHint'] ?? true;
+      settingsSaveProgress.value = appSettings['settingsSaveProgress'] ?? false;
     }
 
     var speechToTextStatus = await _speechToText.initialize();
@@ -63,13 +65,18 @@ class MainPageController extends GetxController {
     await fetchActionList();
     await fetchAudio();
 
-    var a = await getSaving();
-    currentPage.clear();
-    if (a != null && a['curr'] != '') {
-      var b = actionMap[a['curr']];
-      if (b != null) _addActionToPage(a['curr']);
-      if (a['history'] != null) {
-        historyOfActions.value = a['history'];
+    if (settingsSaveProgress.value) {
+      var a = await getSaving();
+      currentPage.clear();
+      if (a != null && a['curr'] != '') {
+        var b = actionMap[a['curr']];
+        if (b != null) _addActionToPage(a['curr']);
+        if (a['history'] != null) {
+          historyOfActions.value = a['history'];
+        }
+      } else {
+        // APP OPENED FOR FIRST TIME
+        _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
       }
     } else {
       // APP OPENED FOR FIRST TIME
@@ -185,6 +192,7 @@ class MainPageController extends GetxController {
   }
 
   Future<String> userFreeTextTaskAnswer(text) async {
+    if (text == '') return 'Вы ввели пустой текст';
     final response = await _apiService.sendUserFreeTextTaskAnswer('2_1', text);
     switch (response) {
       case 'ok':
@@ -200,6 +208,7 @@ class MainPageController extends GetxController {
   void _everyStepActions(String id_, {fromPrevious = false}) {
     if (_speechToText.isListening) _speechToText.stop();
     if (fromPrevious) {
+      // если идем назад
       currentPage.clear();
       _addActionToPage(historyOfActions.last);
       id_ = historyOfActions.last;
@@ -311,16 +320,23 @@ class MainPageController extends GetxController {
         recognitionResult = 'next';
       }
     }
-    for (var item in back) {
-      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-        recognitionResult = 'back';
+
+    if (recognitionResult == '') {
+      for (var item in back) {
+        if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
+          recognitionResult = 'back';
+        }
       }
     }
-    for (var item in repeat) {
-      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-        recognitionResult = 'repeat';
+
+    if (recognitionResult == '') {
+      for (var item in repeat) {
+        if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
+          recognitionResult = 'repeat';
+        }
       }
     }
+
     if (recognitionResult != '') {
       showSnackBarMessage(
         'Распознал: $_recognizedWords',
