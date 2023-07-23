@@ -87,7 +87,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     SizedBox(height: 40.sp),
                     ...getWidgetByAction(),
                     SizedBox(height: 40.sp),
-                    if (Platform.isIOS) SizedBox(height: MediaQuery.of(context).viewInsets.bottom,)
                   ],
                 ),
               ),
