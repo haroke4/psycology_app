@@ -75,12 +75,11 @@ class MainPageController extends GetxController {
         if (a['history'] != null) {
           historyOfActions.value = a['history'];
         }
-      } else {
+      } else if (currentPage.isEmpty) {
         // APP OPENED FOR FIRST TIME
         _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
       }
-    } else {
-      // APP OPENED FOR FIRST TIME
+    } else if (currentPage.isEmpty) {
       _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
     }
     inited = true;
@@ -265,18 +264,16 @@ class MainPageController extends GetxController {
   }) async {
     var blockedPages = ['1_1', '1_4', '1_7'];
     if (freeTextController != null) return;
-    for (var i in currentPage){
-      if (blockedPages.contains(i.id)){
+    for (var i in currentPage) {
+      if (blockedPages.contains(i.id)) {
         return;
       }
     }
-
 
     if (_speechToText.isListening) return;
     if (!settingsVoiceControl.value) return;
 
     if (incrementTries) {
-
       _recognitionTries += 1;
     } else {
       _recognitionTries = 0;
