@@ -27,8 +27,11 @@ class SpeakerButtonState extends State<SpeakerButton> {
     _player.playbackEventStream.listen((event) {
       if (mounted) {
         setState(() {
-          if (event.processingState == ProcessingState.completed ||
-              (event.processingState == ProcessingState.idle && started)) {
+          if (event.processingState == ProcessingState.completed && started) {
+            mainController.startVoiceRecognition();
+            started = false;
+          }
+          else if (event.processingState == ProcessingState.idle && started){
             mainController.startVoiceRecognition();
             started = false;
           }
@@ -56,6 +59,8 @@ class SpeakerButtonState extends State<SpeakerButton> {
   }
 
   Future<void> playPressed() async {
+    print('Я 2 КОНЧЕННЫЙ');
+
     if (_player.playing == true) {
       _player.stop();
       return;
@@ -68,6 +73,7 @@ class SpeakerButtonState extends State<SpeakerButton> {
 
   //Requiered when several appeals подряд идет
   Future<void> stopAndPlayNext() async {
+    print('Я 1 КОНЧЕННЫЙ');
     _player.stop();
     _player.setFilePath(widget.filePath);
     await _player.play();

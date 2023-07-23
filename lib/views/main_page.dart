@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -85,6 +87,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     SizedBox(height: 40.sp),
                     ...getWidgetByAction(),
                     SizedBox(height: 40.sp),
+                    if (Platform.isIOS) SizedBox(height: MediaQuery.of(context).viewInsets.bottom,)
                   ],
                 ),
               ),

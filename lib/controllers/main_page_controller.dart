@@ -52,15 +52,16 @@ class MainPageController extends GetxController {
           'Голосовое управление не поддерживается на этом устройстве');
     }
     // Если нечего не распознал, пытаемся еще и еще раз
-    _speechToText.errorListener = (SpeechRecognitionError data) {
-      print('КОНЧЕННЫЙ $data');
-      if ((data.errorMsg == 'error_no_match' ||
-              data.errorMsg == 'error_speech_timeout') &&
-          _recognizedWords == '' &&
-          _recognitionTries < 2) {
-        startVoiceRecognition(silent: true, incrementTries: true);
-      }
-    };
+    // _speechToText.errorListener = (SpeechRecognitionError data) async{
+    //   print('КОНЧЕННЫЙ $data $_recognitionTries');
+    //   if (data.errorMsg == 'error_no_match' ||
+    //       data.errorMsg == 'error_speech_timeout') {
+    //     if (_recognizedWords == '' && _recognitionTries < 2) {
+    //       await _speechToText.stop();
+    //       startVoiceRecognition(silent: true, incrementTries: true);
+    //     }
+    //   }
+    // };
 
     await fetchActionList();
     await fetchAudio();
@@ -261,13 +262,25 @@ class MainPageController extends GetxController {
     silent = false,
     incrementTries = false,
   }) async {
+    var blockedPages = ['1_1', '1_4', '1_7'];
+    if (freeTextController != null) return;
+    for (var i in currentPage){
+      if (blockedPages.contains(i.id)){
+        return;
+      }
+    }
+
+
     if (_speechToText.isListening) return;
     if (!settingsVoiceControl.value) return;
+
     if (incrementTries) {
+
       _recognitionTries += 1;
     } else {
       _recognitionTries = 0;
     }
+
     if (!silent) {
       showSnackBarMessage(
         'Распознование голоса...',
@@ -443,7 +456,7 @@ class MainPageController extends GetxController {
     freeTextController.text = _recognizedWords + result.recognizedWords;
     if (result.finalResult) {
       if (!result.recognizedWords.toLowerCase().contains('запись')) {
-        startVoiceRecognition();
+        startVoiceRecognition(silent: true);
         _recognizedWords += '${result.recognizedWords} ';
         return;
       }
@@ -451,6 +464,7 @@ class MainPageController extends GetxController {
       userFreeTextTaskAnswer(freeTextController.text)
           .then((value) => showSnackBarMessage(value));
 
+      freeTextController.text = '';
       freeTextController = null;
       nextPage();
       _recognizedWords = '';
