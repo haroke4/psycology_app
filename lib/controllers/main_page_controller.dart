@@ -243,6 +243,7 @@ class MainPageController extends GetxController {
   void nextPage() {
     var last = currentPage.last;
     if (currentPage.last.nextId != '') {
+      freeTextController = null;
       _everyStepActions(last.nextId);
     }
   }

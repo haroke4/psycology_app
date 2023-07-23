@@ -59,7 +59,6 @@ class SpeakerButtonState extends State<SpeakerButton> {
   }
 
   Future<void> playPressed() async {
-    print('Я 2 КОНЧЕННЫЙ');
 
     if (_player.playing == true) {
       _player.stop();
@@ -73,7 +72,6 @@ class SpeakerButtonState extends State<SpeakerButton> {
 
   //Requiered when several appeals подряд идет
   Future<void> stopAndPlayNext() async {
-    print('Я 1 КОНЧЕННЫЙ');
     _player.stop();
     _player.setFilePath(widget.filePath);
     await _player.play();
