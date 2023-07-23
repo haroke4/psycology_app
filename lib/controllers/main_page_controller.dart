@@ -192,6 +192,7 @@ class MainPageController extends GetxController {
   }
 
   Future<String> userFreeTextTaskAnswer(text) async {
+    print('gay');
     if (text == '') return 'Вы ввели пустой текст';
     final response = await _apiService.sendUserFreeTextTaskAnswer('2_1', text);
     switch (response) {

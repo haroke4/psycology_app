@@ -172,18 +172,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       MyTextField(
         hintText: "Enter your text here",
         controller: _controller.freeTextController,
-        onNextPressed: () {
-          _controller.nextPage();
+        onNextPressed: () async {
           _controller
-              .userFreeTextTaskAnswer(_controller.freeTextController.text);
+              .userFreeTextTaskAnswer(_controller.freeTextController.text)
+              .then((value) => showSnackBarMessage(value));
+          _controller.nextPage();
         },
       ),
       SizedBox(height: 20.sp),
       ControlButtons(
         onNextPressed: () async {
+          _controller
+              .userFreeTextTaskAnswer(_controller.freeTextController.text)
+              .then((value) => showSnackBarMessage(value));
           _controller.nextPage();
-          showSnackBarMessage(await _controller
-              .userFreeTextTaskAnswer(_controller.freeTextController.text));
         },
         onPreviousPressed: () => _controller.previousPage(),
       ),
