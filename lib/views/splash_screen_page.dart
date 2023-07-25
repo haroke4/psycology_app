@@ -85,11 +85,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: RotationTransition(
           turns: Tween(begin: 0.0, end: 1.0).animate(_animationController),
-          child: const Icon(
-            Icons.ac_unit_sharp,
-            size: 200,
-            color: Colors.white,
-          ),
+          child: Image.asset('assets/image.png'),
         ),
       ),
     );

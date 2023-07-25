@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -30,8 +29,7 @@ class SpeakerButtonState extends State<SpeakerButton> {
           if (event.processingState == ProcessingState.completed && started) {
             mainController.startVoiceRecognition();
             started = false;
-          }
-          else if (event.processingState == ProcessingState.idle && started){
+          } else if (event.processingState == ProcessingState.idle && started) {
             mainController.startVoiceRecognition();
             started = false;
           }
@@ -59,7 +57,6 @@ class SpeakerButtonState extends State<SpeakerButton> {
   }
 
   Future<void> playPressed() async {
-
     if (_player.playing == true) {
       _player.stop();
       return;
@@ -67,7 +64,6 @@ class SpeakerButtonState extends State<SpeakerButton> {
     _player.setFilePath(widget.filePath);
     await _player.play();
     started = true;
-
   }
 
   //Requiered when several appeals подряд идет
@@ -76,7 +72,6 @@ class SpeakerButtonState extends State<SpeakerButton> {
     _player.setFilePath(widget.filePath);
     await _player.play();
     started = true;
-
   }
 
   @override
@@ -88,9 +83,9 @@ class SpeakerButtonState extends State<SpeakerButton> {
         shape: const CircleBorder(),
       ),
       child: Padding(
-        padding: EdgeInsets.all(25.sp),
+        padding: EdgeInsets.fromLTRB(25.sp, 42.sp, 25.sp, 25.sp),
         child: Icon(
-          Icons.multitrack_audio,
+          Icons.mic_rounded,
           color: lightColor5,
           size: 150.sp,
         ),

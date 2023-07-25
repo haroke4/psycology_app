@@ -23,7 +23,6 @@ class SplashScreenController extends GetxController {
   Future<void> checkIfTokenValid() async{
     var t = await getAuthToken();
     var r = await _apiService.isTokenValid(t);
-    await Future.delayed(const Duration(seconds: 1)); // imitating server delay
 
     switch(r){
       case 'no': {

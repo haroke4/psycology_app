@@ -77,17 +77,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
-              child: Obx(
-                () => Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(width: double.infinity),
-                    SizedBox(height: 40.sp),
-                    ...getWidgetByAction(),
-                    SizedBox(height: 40.sp),
-                  ],
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
+                child: Obx(
+                  () => Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(width: double.infinity),
+                      SizedBox(height: 40.sp),
+                      ...getWidgetByAction(),
+                      SizedBox(height: 40.sp),
+                    ],
+                  ),
                 ),
               ),
             ),

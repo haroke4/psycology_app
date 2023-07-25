@@ -26,17 +26,16 @@ class LoginPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                height: 40.sp,
+                height: 10.sp,
               ),
               Center(
-                  child: Icon(
-                Icons.ac_unit_sharp,
-                size: 180.sp,
-                color: lightColor1,
-              )),
-              SizedBox(
-                height: 20.sp,
+                child: Image.asset(
+                  'assets/image.png',
+                  width: 280.sp,
+                  height: 280.sp,
+                ),
               ),
+
               LoginTextField(
                 hintText: "Логин",
                 controller: _usernameController,

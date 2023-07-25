@@ -88,7 +88,13 @@ class MainPageController extends GetxController {
   Future<void> _setActionList(data) async {
     actionMap.clear();
     for (var item in data) {
-      actionMap.addAll({item['id'].toString(): ActionModel.fromJson(item)});
+      try {
+        actionMap.addAll({item['id'].toString(): ActionModel.fromJson(item)});
+
+      }
+      catch (e){
+        print('ERROR ON ${item['id']} ${item['type_task']}' );
+      }
     }
   }
 
