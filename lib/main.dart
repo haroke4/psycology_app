@@ -10,11 +10,12 @@ import 'package:psychology_app/views/splash_screen_page.dart';
 
 import 'controllers/main_page_controller.dart';
 
-void main() {
+void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   Get.put(ApiService());
   Get.put(MainPageController());
+  await ScreenUtil.ensureScreenSize();
 
   runApp(const MyApp());
 }
