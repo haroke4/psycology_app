@@ -74,8 +74,7 @@ Future<void> setLocalActionList(data) async{
 Future<Map<String, dynamic>?> getLocalActionsList() async{
   final t = await readFile('data.json');
   if (t == null) return null;
-  final ans = jsonDecode(t);
-  return ans;
+  return jsonDecode(t);
 }
 
 
@@ -98,6 +97,17 @@ Future<void> saveAudioToLocal(filename, List<int> bytes) async{
   final file = File('${directory.path}/audio/$filename');
   await file.writeAsBytes(bytes);
 }
+
+Future<List<dynamic>?> getLocalNoVoiceRecognitionModels() async{
+  final t = await readFile('no_voice.json');
+  if (t == null) return null;
+  return jsonDecode(t);
+}
+
+Future<void> setLocalNoVoiceRecognitionModels(data) async{
+  await createFile('no_voice.json', jsonEncode(data));
+}
+
 
 String getActionAudioFilePath(ActionModel action){
   return '${thisAppDirectory?.path}/audio/${action.id}.m4a';

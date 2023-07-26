@@ -205,7 +205,15 @@ class MainPageController extends GetxController {
   }
 
   Future<void> fetchNoVoiceRecognitionModels() async{
+    var localData = await getLocalNoVoiceRecognitionModels();
+    if (localData != null){
+      _noVoiceRecognitionModels = localData;
+    }
+
+    // downloading new version from net
     _noVoiceRecognitionModels = await _apiService.getNoVoiceRecognitionModels();
+    setLocalNoVoiceRecognitionModels(_noVoiceRecognitionModels);
+
   }
 
   Future<String> userFreeTextTaskAnswer(text) async {
