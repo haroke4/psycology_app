@@ -55,40 +55,21 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomRefreshIndicator(
-        builder: MaterialIndicatorDelegate(
-          backgroundColor: lightColor1,
-          builder: (context, controller) {
-            return Transform.rotate(
-              angle: 180 * controller.value * 3.14 / 180,
-              child: Icon(
-                Icons.settings,
-                color: lightColor5,
-                size: 40,
-              ),
-            );
-          },
-        ),
-
-        /// A function that is called when the user drags the refresh indicator.
-        onRefresh: () => showSettingsPopup(context),
-
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
-              child: Obx(
-                () => Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(width: double.infinity),
-                    SizedBox(height: 40.sp),
-                    ...getWidgetByAction(),
-                    SizedBox(height: 40.sp),
-                  ],
-                ),
+      body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
+            child: Obx(
+              () => Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(width: double.infinity),
+                  SizedBox(height: 40.sp),
+                  ...getWidgetByAction(),
+                  SizedBox(height: 40.sp),
+                ],
               ),
             ),
           ),
