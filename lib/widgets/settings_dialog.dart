@@ -49,10 +49,20 @@ Future<void> showSettingsPopup(context) async {
                     mainController.settingsAutoplay.value = a;
                     saveSettings();
                   },
-                  activeColor: lightColor5,
+                  activeColor: lightColor3,
                   activeTrackColor: lightColor4,
-                  inactiveThumbColor: lightColor3,
+                  inactiveThumbColor: lightColor5,
                   inactiveTrackColor: lightColor4,
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                SizedBox(
+                  height: 10.sp,
+                ),
+                SizedBox(
+                  height: 10.sp,
                 ),
               ],
             ),
@@ -65,10 +75,20 @@ Future<void> showSettingsPopup(context) async {
                     mainController.settingsVoiceControl.value = a;
                     saveSettings();
                   },
-                  activeColor: lightColor5,
+                  activeColor: lightColor3,
                   activeTrackColor: lightColor4,
-                  inactiveThumbColor: lightColor3,
+                  inactiveThumbColor: lightColor5,
                   inactiveTrackColor: lightColor4,
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                SizedBox(
+                  height: 10.sp,
+                ),
+                SizedBox(
+                  height: 10.sp,
                 ),
               ],
             ),
@@ -81,10 +101,20 @@ Future<void> showSettingsPopup(context) async {
                     mainController.settingsSaveProgress.value = a;
                     saveSettings();
                   },
-                  activeColor: lightColor5,
+                  activeColor: lightColor3,
                   activeTrackColor: lightColor4,
-                  inactiveThumbColor: lightColor3,
+                  inactiveThumbColor: lightColor5,
                   inactiveTrackColor: lightColor4,
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                SizedBox(
+                  height: 10.sp,
+                ),
+                SizedBox(
+                  height: 10.sp,
                 ),
               ],
             ),

@@ -10,12 +10,12 @@ import '../services/api_service.dart';
 import '../services/local_storage_service.dart';
 
 class MainPageController extends GetxController {
+  // Required for UI and stuff
   var currentPageHaveSelectButtons = false;
   var freeTextController;
-  var _recognizedWords = ''; // там распознование обрывается вот
-  var _recognitionTries = 0;
   var inited = false;
 
+  // Controller statuses
   var isLoadingFirstTime = false.obs;
   var isLoading = false.obs;
   var isSending = false.obs;
@@ -34,6 +34,9 @@ class MainPageController extends GetxController {
   var settingsSaveProgress = false.obs;
 
   //
+  var _recognizedWords = ''; // там распознование обрывается вот
+  var _recognitionTries = 0;
+  var _noVoiceRecognitionModels = [];
   final _apiService = Get.find<ApiService>();
   final SpeechToText _speechToText = SpeechToText();
 
@@ -63,8 +66,11 @@ class MainPageController extends GetxController {
     //   }
     // };
 
+
     await fetchActionList();
     await fetchAudio();
+    fetchNoVoiceRecognitionModels();  // no await because it does not so matter
+
 
     if (settingsSaveProgress.value) {
       var a = await getSaving();
@@ -82,6 +88,7 @@ class MainPageController extends GetxController {
     } else if (currentPage.isEmpty) {
       _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
     }
+
     inited = true;
   }
 
@@ -197,6 +204,10 @@ class MainPageController extends GetxController {
     isLoading.value = false;
   }
 
+  Future<void> fetchNoVoiceRecognitionModels() async{
+    _noVoiceRecognitionModels = await _apiService.getNoVoiceRecognitionModels();
+  }
+
   Future<String> userFreeTextTaskAnswer(text) async {
     if (text == '') return 'Вы ввели пустой текст';
     final response = await _apiService.sendUserFreeTextTaskAnswer('2_1', text);
@@ -268,10 +279,8 @@ class MainPageController extends GetxController {
     silent = false,
     incrementTries = false,
   }) async {
-    var blockedPages = ['1_1', '1_4', '1_7'];
-    if (freeTextController != null) return;
     for (var i in currentPage) {
-      if (blockedPages.contains(i.id)) {
+      if (_noVoiceRecognitionModels.contains(i.id)) {
         return;
       }
     }

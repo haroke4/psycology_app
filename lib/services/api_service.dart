@@ -78,10 +78,16 @@ class ApiService extends GetConnect {
       final bytes = response.bodyBytes;
       return bytes;
     } catch (e) {
-      showSnackBarMessage('Error while downloading audio [$audioId]: ${e.toString()}');
+      showSnackBarMessage('Ошибка при загрузке аудио [$audioId]: ${e.toString()}');
       return null;
     }
   }
+
+  Future<List<dynamic>> getNoVoiceRecognitionModels() async{
+    final res = await get('$HOST/get_no_voice_recognition_models');
+    return res.body['message'];
+}
+
 
   //AUTH
   Future<String> loginWithCredentials(String username, String password) async {
@@ -109,6 +115,8 @@ class ApiService extends GetConnect {
     return res.body['message'] == true ? 'main' : 'login';
   }
 
+  // IN APP Stuff
+
   Future<String> sendUserFreeTextTaskAnswer(String taskId, String text) async{
     final body = {'task_id': taskId, 'text': text};
     final res = await post('$HOST/create_user_free_text_task', body);
@@ -121,7 +129,7 @@ class ApiService extends GetConnect {
     return res.body['message'];
 
   }
+
 }
 
-//TODO:  siri control
 
