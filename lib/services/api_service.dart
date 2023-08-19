@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:psychology_app/main.dart';
 
-const HOST = "http://92.51.39.141/api"; //"http://10.0.2.2:8000/api";
+const HOST = "http://92.63.176.242/api"; //"http://10.0.2.2:8000/api";
 var myHeaders = {
   "Content-type": "application/json",
 };

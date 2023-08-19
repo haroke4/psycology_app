@@ -6,78 +6,64 @@ import '../controllers/main_page_controller.dart';
 import '../prefabs/colors.dart';
 
 class SpeakerButton extends StatefulWidget {
-  final String filePath;
-
-  const SpeakerButton({Key? key, required this.filePath}) : super(key: key);
+  const SpeakerButton({Key? key}) : super(key: key);
 
   @override
   State<SpeakerButton> createState() => SpeakerButtonState();
 }
 
 class SpeakerButtonState extends State<SpeakerButton> {
-  final _player = AudioPlayer();
-  bool started = false;
-
-  @override
-  void initState() {
-    super.initState();
-    var mainController = Get.find<MainPageController>();
-
-    _player.playbackEventStream.listen((event) {
-      if (mounted) {
-        setState(() {
-          if (event.processingState == ProcessingState.completed && started) {
-            mainController.startVoiceRecognition();
-            started = false;
-          } else if (event.processingState == ProcessingState.idle && started) {
-            mainController.startVoiceRecognition();
-            started = false;
-          }
-        });
-      }
-    });
-
-    // _player.onPlayerStateChanged.listen((PlayerState s) {
-    //   if (mounted) {
-    //     setState(() {
-    //       _playerState = s;
-    //     });
-    //     if (s == PlayerState.completed || s == PlayerState.stopped) {
-    //
-    //     }
-    //   }
-    // });
-    if (mainController.settingsAutoplay.value) playPressed();
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  Future<void> playPressed() async {
-    if (_player.playing == true) {
-      _player.stop();
-      return;
-    }
-    _player.setFilePath(widget.filePath);
-    await _player.play();
-    started = true;
-  }
-
-  //Requiered when several appeals подряд идет
-  Future<void> stopAndPlayNext() async {
-    _player.stop();
-    _player.setFilePath(widget.filePath);
-    await _player.play();
-    started = true;
-  }
+  final _mainController = Get.find<MainPageController>();
+  // late final _player;
+  // bool _started = false;
+  //
+  // @override
+  // void initState() {
+  //   print(widget.filePath);
+  //   _player = _mainController.getAudioPlayer;
+  //   super.initState();
+  //
+  //   _player.playbackEventStream.listen((event) {
+  //     if (mounted) {
+  //       setState(() {
+  //         if (event.processingState == ProcessingState.completed && _started) {
+  //           _mainController.startVoiceRecognition();
+  //           _started = false;
+  //         } else if (event.processingState == ProcessingState.idle &&
+  //             _started) {
+  //           _mainController.startVoiceRecognition();
+  //           _started = false;
+  //         }
+  //       });
+  //     }
+  //   });
+  //
+  //   if (_mainController.settingsAutoplay.value) playAudio();
+  // }
+  //
+  //
+  // Future<void> playAudio() async {
+  //   if (_player.playing == true) {
+  //     await _player.stop();
+  //   }
+  //
+  //   await _player.setFilePath(widget.filePath);
+  //   await _player.play();
+  //   _started = true;
+  // }
+  //
+  // //Requiered when several appeals подряд идет
+  // Future<void> stopAndPlayNext() async {
+  //   _player.stop();
+  //   _player.setFilePath(widget.filePath);
+  //   await _player.play();
+  //   _started = true;
+  // }
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: playPressed,
+      onPressed: _mainController.startVoiceRecognition,
       style: ElevatedButton.styleFrom(
         backgroundColor: lightColor2,
         shape: const CircleBorder(),

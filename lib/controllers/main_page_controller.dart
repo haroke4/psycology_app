@@ -1,31 +1,26 @@
 import 'package:get/get.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:psychology_app/controllers/audio_and_voice_rec_controller.dart';
 import 'package:psychology_app/main.dart';
-import 'package:speech_to_text/speech_recognition_error.dart';
-import 'package:speech_to_text/speech_recognition_result.dart';
-import 'package:speech_to_text/speech_to_text.dart';
-import 'package:string_similarity/string_similarity.dart';
 
 import '../models/action_model.dart';
 import '../services/api_service.dart';
 import '../services/local_storage_service.dart';
 
 class MainPageController extends GetxController {
-  // Required for UI and stuff
+  // String is start id of the appeal action; dynamic because from it serializes from json
+  var historyOfActions = <dynamic>[].obs;
+  var currentPage = <ActionModel>[].obs;
+  var actionMap = <String, ActionModel>{}.obs;
   var currentPageHaveSelectButtons = false;
-  var freeTextController;
-  var inited = false;
 
   // Controller statuses
   var isLoadingFirstTime = false.obs;
   var isLoading = false.obs;
-  var isSending = false.obs;
   var loadingPercentage = 0.0.obs;
 
-  var actionMap = <String, ActionModel>{}.obs;
-
-  // String is start id of the appeal action; dynamic because from it serializes from json
-  var historyOfActions = <dynamic>[].obs;
-  var currentPage = <ActionModel>[].obs;
+  // Required for UI and stuff
+  var inited = false;
 
   // Settings
   var settingsAutoplay = true.obs;
@@ -34,13 +29,13 @@ class MainPageController extends GetxController {
   var settingsSaveProgress = false.obs;
 
   //
-  var _recognizedWords = ''; // там распознование обрывается вот
-  var _recognitionTries = 0;
-  var _noVoiceRecognitionModels = [];
+  final _audioAndVoiceRecController = AudioAndVoiceRecController();
+
+  AudioPlayer get getAudioPlayer => _audioAndVoiceRecController.getAudioPlayer;
   final _apiService = Get.find<ApiService>();
-  final SpeechToText _speechToText = SpeechToText();
 
   Future<void> initialize() async {
+    // settings
     var appSettings = await getSettings();
     if (appSettings != null) {
       settingsAutoplay.value = appSettings['settingsAutoplay'] ?? true;
@@ -49,28 +44,12 @@ class MainPageController extends GetxController {
       settingsSaveProgress.value = appSettings['settingsSaveProgress'] ?? false;
     }
 
-    var speechToTextStatus = await _speechToText.initialize();
-    if (!speechToTextStatus) {
-      showSnackBarMessage(
-          'Голосовое управление не поддерживается на этом устройстве');
-    }
-    // Если нечего не распознал, пытаемся еще и еще раз
-    // _speechToText.errorListener = (SpeechRecognitionError data) async{
-    //   print('КОНЧЕННЫЙ $data $_recognitionTries');
-    //   if (data.errorMsg == 'error_no_match' ||
-    //       data.errorMsg == 'error_speech_timeout') {
-    //     if (_recognizedWords == '' && _recognitionTries < 2) {
-    //       await _speechToText.stop();
-    //       startVoiceRecognition(silent: true, incrementTries: true);
-    //     }
-    //   }
-    // };
-
+    // voice recognition
+    _audioAndVoiceRecController.initialize(this);
 
     await fetchActionList();
     await fetchAudio();
-    fetchNoVoiceRecognitionModels();  // no await because it does not so matter
-
+    await fetchNoVoiceRecognitionModels(); // no await because it does not so matter
 
     if (settingsSaveProgress.value) {
       var a = await getSaving();
@@ -85,8 +64,10 @@ class MainPageController extends GetxController {
         // APP OPENED FOR FIRST TIME
         _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
       }
+      _audioAndVoiceRecController.playAppealActionAudio();
     } else if (currentPage.isEmpty) {
       _addActionToPage(actionMap[actionMap.keys.toList().first]!.id);
+      _audioAndVoiceRecController.playAppealActionAudio();
     }
 
     inited = true;
@@ -97,10 +78,8 @@ class MainPageController extends GetxController {
     for (var item in data) {
       try {
         actionMap.addAll({item['id'].toString(): ActionModel.fromJson(item)});
-
-      }
-      catch (e){
-        print('ERROR ON ${item['id']} ${item['type_task']}' );
+      } catch (e) {
+        print('ERROR ON ${item['id']} ${item['type_task']}');
       }
     }
   }
@@ -204,16 +183,16 @@ class MainPageController extends GetxController {
     isLoading.value = false;
   }
 
-  Future<void> fetchNoVoiceRecognitionModels() async{
+  Future<void> fetchNoVoiceRecognitionModels() async {
     var localData = await getLocalNoVoiceRecognitionModels();
-    if (localData != null){
-      _noVoiceRecognitionModels = localData;
+    if (localData != null) {
+      _audioAndVoiceRecController.setNoVoiceRecognitionModels(localData);
     }
 
     // downloading new version from net
-    _noVoiceRecognitionModels = await _apiService.getNoVoiceRecognitionModels();
-    setLocalNoVoiceRecognitionModels(_noVoiceRecognitionModels);
-
+    var bb = await _apiService.getNoVoiceRecognitionModels();
+    _audioAndVoiceRecController.setNoVoiceRecognitionModels(bb);
+    setLocalNoVoiceRecognitionModels(bb);
   }
 
   Future<String> userFreeTextTaskAnswer(text) async {
@@ -231,7 +210,8 @@ class MainPageController extends GetxController {
 
   // Interactive
   void _everyStepActions(String id_, {fromPrevious = false}) {
-    if (_speechToText.isListening) _speechToText.stop();
+    _audioAndVoiceRecController.stopVoiceRecognition();
+
     if (fromPrevious) {
       // если идем назад
       currentPage.clear();
@@ -239,15 +219,22 @@ class MainPageController extends GetxController {
       id_ = historyOfActions.last;
       historyOfActions.removeLast();
     } else {
-      historyOfActions.add(currentPage.value.first.id);
+      historyOfActions.add(currentPage.first.id);
       currentPage.clear();
       _addActionToPage(id_);
     }
+
     setSaving(id_, historyOfActions);
+    _audioAndVoiceRecController.playAppealActionAudio();
   }
 
   void _addActionToPage(String id_) {
-    var curr = actionMap[id_]!;
+    var curr = actionMap[id_];
+    if(curr == null){
+      showSnackBarMessage("ERROR AT: ${id_}");
+      return;
+
+    }
     currentPage.add(curr);
 
     var temp = actionMap[actionMap[id_]!.nextId];
@@ -260,14 +247,15 @@ class MainPageController extends GetxController {
   }
 
   void changeCurrentPage(String id_) {
-    if (actionMap[id_] == null) return;
+    var a = actionMap[id_];
+    if (a == null) return;
+    if (a.typeTask != ActionTypeTask.appeal) return;
     _everyStepActions(id_);
   }
 
   void nextPage() {
     var last = currentPage.last;
-    if (currentPage.last.nextId != '') {
-      freeTextController = null;
+    if (last.nextId != '') {
       _everyStepActions(last.nextId);
     }
   }
@@ -277,218 +265,17 @@ class MainPageController extends GetxController {
     _everyStepActions('', fromPrevious: true);
   }
 
-  String getCurrentActionAudioPath(action) {
+  String getCurrentActionAudioPath() {
+    var action = currentPage.first;
     return getActionAudioFilePath(action);
   }
 
-  // voice recognition
-  void startVoiceRecognition({
-    Function? handler,
-    silent = false,
-    incrementTries = false,
-  }) async {
-    for (var i in currentPage) {
-      if (_noVoiceRecognitionModels.contains(i.id)) {
-        return;
-      }
-    }
-
-    if (_speechToText.isListening) return;
-    if (!settingsVoiceControl.value) return;
-
-    if (incrementTries) {
-      _recognitionTries += 1;
-    } else {
-      _recognitionTries = 0;
-    }
-
-    if (!silent) {
-      showSnackBarMessage(
-        'Распознование голоса...',
-        duration: const Duration(milliseconds: 1500),
-      );
-    }
-
-    var func = _voiceRecognitionResult;
-
-    if (handler != null) func = (a) => handler(a);
-    if (currentPageHaveSelectButtons) func = _voiceRecognitionForSelect;
-    if (freeTextController != null) func = _voiceRecognitionForFreeText;
-    _speechToText.listen(
-      onResult: func,
-      localeId: 'ru_RU',
-      pauseFor: const Duration(seconds: 5),
-      listenMode: freeTextController == null
-          ? ListenMode.confirmation
-          : ListenMode.dictation,
-    );
-
-    // _speechToText.errorListener = (data) {
-    //   print(data);
-    // };
-  }
-
-  void _voiceRecognitionResult(SpeechRecognitionResult result) {
-    if (!result.finalResult) {
+  void startVoiceRecognition({bool justListen = false}) async {
+    await _audioAndVoiceRecController.stopVoiceRecognition();
+    if (!currentPageHaveSelectButtons) {
+      _audioAndVoiceRecController.fakeVoiceRecognitionAndGoNext();
       return;
     }
-    _recognizedWords = result.recognizedWords;
-    var next = [
-      'Сделал',
-      'Готово',
-      'Дальше',
-      'Далее',
-      'Получилось',
-      'Все',
-      'Доделал',
-      'Закончил',
-      'Запись'
-    ];
-
-    var back = ['Назад', 'Обратно'];
-    var repeat = ['Еще раз', 'Перемотай', 'Заново', 'Ещё раз'];
-    var recognitionResult = '';
-
-    for (var item in next) {
-      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-        recognitionResult = 'next';
-      }
-    }
-
-    if (recognitionResult == '') {
-      for (var item in back) {
-        if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-          recognitionResult = 'back';
-        }
-      }
-    }
-
-    if (recognitionResult == '') {
-      for (var item in repeat) {
-        if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-          recognitionResult = 'repeat';
-        }
-      }
-    }
-
-    if (recognitionResult != '') {
-      showSnackBarMessage(
-        'Распознал: $_recognizedWords',
-        duration: const Duration(seconds: 1),
-      );
-    }
-
-    switch (recognitionResult) {
-      case 'next':
-        nextPage();
-        break;
-      case 'back':
-        previousPage();
-        break;
-      case 'repeat':
-        var a = currentPage.first.id;
-        currentPage.clear();
-        _addActionToPage(a);
-        break;
-
-      default:
-        showSnackBarMessage(
-          'Нет действия для "$_recognizedWords"',
-          duration: const Duration(seconds: 1),
-        );
-        startVoiceRecognition(silent: true);
-        break;
-    }
-    _recognizedWords = '';
-  }
-
-  void _voiceRecognitionForSelect(SpeechRecognitionResult result) {
-    if (!result.finalResult) {
-      return;
-    }
-
-    // если юзер сказал назад или еще раз
-    _recognizedWords = result.recognizedWords;
-    showSnackBarMessage(
-      'Распознал: $_recognizedWords',
-      duration: const Duration(milliseconds: 800),
-    );
-
-    var back = ['Назад', 'Обратно'];
-    var repeat = ['Еще раз', 'Перемотай', 'Заново', 'Ещё раз'];
-    var recognitionResult = '';
-
-    for (var item in back) {
-      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-        recognitionResult = 'back';
-      }
-    }
-
-    for (var item in repeat) {
-      if (_recognizedWords.toLowerCase().contains(item.toLowerCase())) {
-        recognitionResult = 'repeat';
-      }
-    }
-
-    switch (recognitionResult) {
-      case 'back':
-        previousPage();
-        return;
-
-      case 'repeat':
-        var a = currentPage.first.id;
-        currentPage.clear();
-        _addActionToPage(a);
-        return;
-
-      default:
-        break;
-    }
-
-    // если юзер сказал действия кнопок
-
-    var select;
-    for (var item in currentPage) {
-      if (item.typeTask == ActionTypeTask.select) {
-        select = item;
-        break;
-      }
-    }
-    if (select == null) {
-      return;
-    }
-    // algorithm that recognizes
-    double maxCoef = 0;
-    var answer = select.answerList.first;
-    for (var item in select.answerList) {
-      double coef = _recognizedWords
-          .similarityTo(item.text.replaceAll(',', '').toLowerCase());
-      if (coef > maxCoef) {
-        maxCoef = coef;
-        answer = item;
-      }
-    }
-
-    changeCurrentPage(answer.goTo);
-    _recognizedWords = '';
-  }
-
-  void _voiceRecognitionForFreeText(SpeechRecognitionResult result) async {
-    freeTextController.text = _recognizedWords + result.recognizedWords;
-    if (result.finalResult) {
-      if (!result.recognizedWords.toLowerCase().contains('запись')) {
-        startVoiceRecognition(silent: true);
-        _recognizedWords += '${result.recognizedWords} ';
-        return;
-      }
-
-      userFreeTextTaskAnswer(freeTextController.text)
-          .then((value) => showSnackBarMessage(value));
-
-      freeTextController.text = '';
-      freeTextController = null;
-      nextPage();
-      _recognizedWords = '';
-    }
+    _audioAndVoiceRecController.startVoiceRecognition();
   }
 }

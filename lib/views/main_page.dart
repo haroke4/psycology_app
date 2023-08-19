@@ -55,21 +55,41 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(width: double.infinity),
-                  SizedBox(height: 40.sp),
-                  ...getWidgetByAction(),
-                  SizedBox(height: 40.sp),
-                ],
+      resizeToAvoidBottomInset: true,
+      body: CustomRefreshIndicator(
+        builder: MaterialIndicatorDelegate(
+          backgroundColor: lightColor1,
+          builder: (context, controller) {
+            return Transform.rotate(
+              angle: 180 * controller.value * 3.14 / 180,
+              child: Icon(
+                Icons.settings,
+                color: lightColor5,
+                size: 40,
+              ),
+            );
+          },
+        ),
+
+        /// A function that is called when the user drags the refresh indicator.
+        onRefresh: () => showSettingsPopup(context),
+
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.only(left: 20.sp, right: 20.sp),
+              child: Obx(
+                () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: double.infinity),
+                    SizedBox(height: 40.sp),
+                    ...getWidgetByAction(),
+                    SizedBox(height: 40.sp),
+                  ],
+                ),
               ),
             ),
           ),
@@ -99,6 +119,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       switch (item.typeTask) {
         case ActionTypeTask.select:
           _controller.currentPageHaveSelectButtons = item.answerList.isNotEmpty;
+
           if (item.answerList.isNotEmpty) {
             ans.addAll(getWidgetsForSelectTask(item));
           }
@@ -130,6 +151,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         ControlButtons(
           onNextPressed: () async {
             _controller.nextPage();
+
           },
           nextButtonCondition: () => !_controller.currentPageHaveSelectButtons,
           onPreviousPressed: () => _controller.previousPage(),
@@ -147,15 +169,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   List<Widget> getWidgetsForFreeTextTask() {
-    _controller.freeTextController = TextEditingController();
+    var freeTextController = TextEditingController();
     return [
       SizedBox(height: 20.sp),
       MyTextField(
         hintText: "Enter your text here",
-        controller: _controller.freeTextController,
+        controller: freeTextController,
         onNextPressed: () async {
           _controller
-              .userFreeTextTaskAnswer(_controller.freeTextController.text)
+              .userFreeTextTaskAnswer(freeTextController.text)
               .then((value) => showSnackBarMessage(value));
           _controller.nextPage();
         },
@@ -164,7 +186,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       ControlButtons(
         onNextPressed: () async {
           _controller
-              .userFreeTextTaskAnswer(_controller.freeTextController.text)
+              .userFreeTextTaskAnswer(freeTextController.text)
               .then((value) => showSnackBarMessage(value));
           _controller.nextPage();
         },
@@ -175,11 +197,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   List<Widget> getWidgetsForAppealTask(ActionModel item) {
     // Это нужно когда аппил идет подряд
-    final GlobalKey<SpeakerButtonState> k = GlobalKey();
-    var t = SpeakerButton(
-        key: k, filePath: _controller.getCurrentActionAudioPath(item));
+
     return [
-      t,
+    SpeakerButton(),
       SizedBox(height: 20.sp),
       TextBlock(text: item.question),
     ];

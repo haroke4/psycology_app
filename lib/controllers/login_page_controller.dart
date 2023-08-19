@@ -21,6 +21,7 @@ class LoginController extends GetxController {
     var ans = 'ok';
     if (r == 'invalid') {
       showSnackBarMessage("Неправильный логин или пароль");
+      isLoggingIn.value = false;
       return;
     }
     setAuthToken(r);

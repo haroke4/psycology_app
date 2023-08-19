@@ -15,6 +15,7 @@ void main() async{
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   Get.put(ApiService());
   Get.put(MainPageController());
+
   await ScreenUtil.ensureScreenSize();
 
   runApp(const MyApp());
