@@ -78,7 +78,8 @@ class ApiService extends GetConnect {
       final bytes = response.bodyBytes;
       return bytes;
     } catch (e) {
-      showSnackBarMessage('Ошибка при загрузке аудио [$audioId]: ${e.toString()}');
+      showSnackBarMessage('Ошибка при загрузке аудио [$audioId]. Пробую еще раз');
+      getAudioFile(audioId);
       return null;
     }
   }
