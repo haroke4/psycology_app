@@ -43,7 +43,6 @@ class AudioAndVoiceRecController {
 
     // Если нечего не распознал, пытаемся еще и еще раз
     _speechToText.errorListener = (SpeechRecognitionError data) async {
-      showSnackBarMessage(data.toString());
       if (data.errorMsg == 'error_no_match' ||
           data.errorMsg == 'error_speech_timeout') {
         if (_recognizedWords == '' && _recognitionTries < 1) {
@@ -59,10 +58,16 @@ class AudioAndVoiceRecController {
     _audioPlayer.playbackEventStream.listen((event) {
       if (event.processingState == ProcessingState.completed &&
           _startVoiceRecognitionAfterAudioEnds) {
-        _mainController.startVoiceRecognition();
+        voiceRecognition();
         _startVoiceRecognitionAfterAudioEnds = false;
       }
     });
+  }
+
+  void everyStepActions(){
+    stopVoiceRecognition();
+    getAudioPlayer.stop();
+    _fakeVoiceRecognitionState = false;
   }
 
   void setNoVoiceRecognitionModels(List data) {
@@ -85,22 +90,36 @@ class AudioAndVoiceRecController {
     }
   }
 
-  Future<void> startVoiceRecognition({
-    silent = false,
-    incrementTries = false,
-  }) async {
-    _startVoiceRecognitionAfterAudioEnds = false;
-
+  Future<void> voiceRecognition() async{
+    await stopVoiceRecognition();
+    await getAudioPlayer.stop();
     // filters
     for (var i in _mainController.currentPage) {
       if (_noVoiceRecognitionModels.contains(i.id)) {
+        _mainController.nextPage();
         return;
       }
     }
     if (!_mainController.settingsVoiceControl.value) return;
     if (_speechToText.isListening) return;
 
-    //
+    if (_mainController.currentPageHaveFreeText){
+      return;
+    }
+    if (!_mainController.currentPageHaveSelectButtons) {
+      _fakeVoiceRecognitionAndGoNext();
+      return;
+    }
+    _startVoiceRecognition();
+  }
+
+
+  Future<void> _startVoiceRecognition({
+    silent = false,
+    incrementTries = false,
+  }) async {
+    _startVoiceRecognitionAfterAudioEnds = false;
+
     if (incrementTries) {
       _recognitionTries += 1;
     } else {
@@ -129,7 +148,7 @@ class AudioAndVoiceRecController {
     // };
   }
 
-  Future<void> fakeVoiceRecognitionAndGoNext() async {
+  Future<void> _fakeVoiceRecognitionAndGoNext() async {
     _startVoiceRecognitionAfterAudioEnds = false;
     _audioPlayer.stop();
 
@@ -183,7 +202,6 @@ class AudioAndVoiceRecController {
       }
     }
 
-    showSnackBarMessage("${maxCoef}");
     if (maxCoef < 0.124) {
       print("pidroas");
       await _audioPlayer.stop();

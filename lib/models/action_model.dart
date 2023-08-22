@@ -63,7 +63,7 @@ ActionTypeTask getTypeTaskByString(String value) {
   switch (value) {
     case "select":
       return ActionTypeTask.select;
-    case "freeText":
+    case "freetext":
       return ActionTypeTask.freeText;
     case "appeal":
       return ActionTypeTask.appeal;

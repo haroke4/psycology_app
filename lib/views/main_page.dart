@@ -114,6 +114,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     bool addNavigationButtons = true;
     _controller.currentPageHaveSelectButtons = false;
+    _controller.currentPageHaveFreeText = false;
 
     for (var item in _controller.currentPage) {
       switch (item.typeTask) {
@@ -126,12 +127,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           break;
 
         case ActionTypeTask.freeText:
-          if (item.id == '1_2') {
-            // показываем только первый фри текст
-            addNavigationButtons = false;
-
-            ans.addAll(getWidgetsForFreeTextTask());
-          }
+          _controller.currentPageHaveFreeText = true;
+          addNavigationButtons = false;
+          ans.addAll(getWidgetsForFreeTextTask());
           break;
 
         case ActionTypeTask.appeal:
@@ -151,7 +149,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         ControlButtons(
           onNextPressed: () async {
             _controller.nextPage();
-
           },
           nextButtonCondition: () => !_controller.currentPageHaveSelectButtons,
           onPreviousPressed: () => _controller.previousPage(),
@@ -176,18 +173,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         hintText: "Enter your text here",
         controller: freeTextController,
         onNextPressed: () async {
-          _controller
-              .userFreeTextTaskAnswer(freeTextController.text)
-              .then((value) => showSnackBarMessage(value));
+          _controller.userFreeTextTaskAnswer(freeTextController.text);
           _controller.nextPage();
         },
       ),
       SizedBox(height: 20.sp),
       ControlButtons(
         onNextPressed: () async {
-          _controller
-              .userFreeTextTaskAnswer(freeTextController.text)
-              .then((value) => showSnackBarMessage(value));
+          _controller.userFreeTextTaskAnswer(freeTextController.text);
           _controller.nextPage();
         },
         onPreviousPressed: () => _controller.previousPage(),
@@ -199,7 +192,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     // Это нужно когда аппил идет подряд
 
     return [
-    SpeakerButton(),
+      SpeakerButton(),
       SizedBox(height: 20.sp),
       TextBlock(text: item.question),
     ];

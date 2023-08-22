@@ -13,6 +13,7 @@ class MainPageController extends GetxController {
   var currentPage = <ActionModel>[].obs;
   var actionMap = <String, ActionModel>{}.obs;
   var currentPageHaveSelectButtons = false;
+  var currentPageHaveFreeText = false;
 
   // Controller statuses
   var isLoadingFirstTime = false.obs;
@@ -210,7 +211,7 @@ class MainPageController extends GetxController {
 
   // Interactive
   void _everyStepActions(String id_, {fromPrevious = false}) {
-    _audioAndVoiceRecController.stopVoiceRecognition();
+    _audioAndVoiceRecController.everyStepActions();
 
     if (fromPrevious) {
       // если идем назад
@@ -230,10 +231,9 @@ class MainPageController extends GetxController {
 
   void _addActionToPage(String id_) {
     var curr = actionMap[id_];
-    if(curr == null){
+    if (curr == null) {
       showSnackBarMessage("ERROR AT: ${id_}");
       return;
-
     }
     currentPage.add(curr);
 
@@ -271,11 +271,6 @@ class MainPageController extends GetxController {
   }
 
   void startVoiceRecognition({bool justListen = false}) async {
-    await _audioAndVoiceRecController.stopVoiceRecognition();
-    if (!currentPageHaveSelectButtons) {
-      _audioAndVoiceRecController.fakeVoiceRecognitionAndGoNext();
-      return;
-    }
-    _audioAndVoiceRecController.startVoiceRecognition();
+    _audioAndVoiceRecController.voiceRecognition();
   }
 }
